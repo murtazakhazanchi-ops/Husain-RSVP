@@ -1,0 +1,871 @@
+:root {
+  --navy: #062d5d;
+  --red: #b9202b;
+  --cream: #fffaf0;
+  --focus: #f3b71b;
+}
+
+* {
+  box-sizing: border-box;
+}
+
+html,
+body {
+  margin: 0;
+  min-height: 100%;
+}
+
+body {
+  background: #062d5d;
+  font-family: Arial, Helvetica, sans-serif;
+}
+
+.page-shell {
+  width: 100%;
+  padding: 10px;
+}
+
+.invitation {
+  position: relative;
+  width: min(100%, 768px);
+  aspect-ratio: 2 / 3;
+  margin: 0 auto;
+}
+
+.invitation-image {
+  display: block;
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+  user-select: none;
+  -webkit-user-drag: none;
+}
+
+/*
+  All positions use percentages calculated from the approved 1024 × 1536 image.
+  This keeps the controls locked to the artwork at every display size.
+*/
+.overlay-control {
+  position: absolute;
+  z-index: 10;
+  margin: 0;
+  border: 0;
+  border-radius: 0;
+  outline: 0;
+  background: transparent;
+  color: var(--navy);
+  font-family: Arial, Helvetica, sans-serif;
+  font-size: clamp(11px, 1.65vw, 17px);
+  font-weight: 500;
+  line-height: 1;
+}
+
+.overlay-control {
+  -webkit-tap-highlight-color: transparent;
+}
+
+.overlay-control:focus-visible {
+  outline: 3px solid var(--focus);
+  outline-offset: -2px;
+  background: rgba(255, 250, 240, 0.22);
+}
+
+/* Input text begins AFTER the printed icon, never over it. */
+.text-control {
+  padding: 0 1.2% 0 5.4%;
+}
+
+/* Guest field: image box x=97..493, y=1045..1094 */
+.guest-name {
+  left: 9.47%;
+  top: 68.03%;
+  width: 38.67%;
+  height: 3.19%;
+}
+
+/* Mobile field: image box x=530..928, y=1045..1094 */
+.mobile-number {
+  left: 51.76%;
+  top: 68.03%;
+  width: 38.87%;
+  height: 3.19%;
+}
+
+/* Radios: precisely centered over printed circles. */
+.attendance-layer {
+  position: absolute;
+  inset: 0;
+  z-index: 12;
+  margin: 0;
+  padding: 0;
+  border: 0;
+  pointer-events: none;
+}
+
+.radio-hitbox {
+  position: absolute;
+  width: 3.5%;
+  height: 2.35%;
+  border-radius: 50%;
+  cursor: pointer;
+  pointer-events: auto;
+  -webkit-tap-highlight-color: transparent;
+}
+
+/*
+  Larger invisible tap targets, centered precisely on the printed circles.
+  The visible dot is shifted slightly right and upward to match the artwork.
+*/
+.radio-yes {
+  left: 8.94%;
+  top: 73.78%;
+}
+
+.radio-no {
+  left: 47.80%;
+  top: 73.78%;
+}
+
+.radio-hitbox input {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  margin: 0;
+  opacity: 0;
+  cursor: pointer;
+}
+
+.radio-dot {
+  position: absolute;
+  left: 54%;
+  top: 45%;
+  width: 38%;
+  aspect-ratio: 1;
+  border-radius: 50%;
+  background: transparent;
+  transform: translate(-50%, -50%);
+  pointer-events: none;
+}
+
+.radio-hitbox input:checked + .radio-dot {
+  background: var(--red);
+}
+
+.radio-hitbox input:focus-visible + .radio-dot {
+  outline: 3px solid var(--focus);
+  outline-offset: 5px;
+}
+
+/*
+  Printed arrows stay visible, so native select arrows are removed.
+  Text begins after the printed people icon.
+*/
+.select-control {
+  appearance: none;
+  -webkit-appearance: none;
+  padding: clamp(1px, 0.18vw, 2px) 5.3% 0 5.8%;
+  cursor: pointer;
+  -webkit-tap-highlight-color: transparent;
+}
+
+/* Adult box: x=98..493, y=1209..1257 */
+.adult-count {
+  left: 9.57%;
+  top: 78.71%;
+  width: 38.57%;
+  height: 3.13%;
+}
+
+/* Children box: x=529..928, y=1209..1257 */
+.child-count {
+  left: 51.66%;
+  top: 78.71%;
+  width: 38.96%;
+  height: 3.13%;
+}
+
+/* Age fields: no icon inside, so normal left inset. */
+.age-control {
+  top: 86.65%;
+  height: 2.93%;
+  padding: 0 4.7% 0 1.5%;
+  font-size: clamp(10px, 1.5vw, 16px);
+}
+
+.child-age-1 {
+  left: 9.57%;
+  width: 18.46%;
+}
+
+.child-age-2 {
+  left: 30.18%;
+  width: 18.26%;
+}
+
+.child-age-3 {
+  left: 50.88%;
+  width: 18.07%;
+}
+
+.child-age-4 {
+  left: 72.17%;
+  width: 18.46%;
+}
+
+.age-control.is-hidden {
+  visibility: hidden;
+  pointer-events: none;
+}
+
+.age-control:not(.is-hidden) {
+  visibility: visible;
+}
+
+/* Printed button: x=318..695, y=1398..1457 */
+.submit-hitbox {
+  position: absolute;
+  z-index: 14;
+  left: 31.05%;
+  top: 91.02%;
+  width: 36.82%;
+  height: 3.84%;
+  padding: 0;
+  border: 0;
+  border-radius: 16px;
+  background: transparent;
+  cursor: pointer;
+}
+
+.submit-hitbox:hover {
+  background: rgba(255, 255, 255, 0.07);
+}
+
+.submit-hitbox:focus-visible {
+  outline: 4px solid var(--focus);
+  outline-offset: 2px;
+}
+
+.submit-hitbox:disabled {
+  cursor: wait;
+  opacity: 0.65;
+}
+
+.status-message {
+  width: min(100%, 768px);
+  min-height: 1.4em;
+  margin: 10px auto 24px;
+  padding: 0 12px;
+  color: white;
+  font-size: 15px;
+  font-weight: 700;
+  text-align: center;
+}
+
+.status-message.success {
+  color: #d8ffde;
+}
+
+.status-message.error {
+  color: #ffd8d8;
+}
+
+.sr-only {
+  position: absolute !important;
+  width: 1px !important;
+  height: 1px !important;
+  padding: 0 !important;
+  margin: -1px !important;
+  overflow: hidden !important;
+  clip: rect(0, 0, 0, 0) !important;
+  white-space: nowrap !important;
+  border: 0 !important;
+}
+
+@media (max-width: 520px) {
+  .page-shell {
+    padding: 0;
+  }
+
+  .invitation {
+    width: 100%;
+  }
+
+  .overlay-control {
+    font-size: 11px;
+  }
+
+  .age-control {
+    font-size: 10px;
+  }
+
+  .status-message {
+    font-size: 14px;
+  }
+}
+
+
+/* Final polish */
+.text-control,
+.select-control {
+  transform: translateY(2px);
+}
+
+.text-control {
+  padding-left: 4.9%;
+}
+
+.select-control {
+  padding-left: 5.25%;
+}
+
+/* Cover printed age cells that are not active. */
+.age-mask {
+  position: absolute;
+  z-index: 9;
+  top: 85.60%;
+  height: 4.35%;
+  background: #fffaf0;
+  border-radius: 7px;
+  opacity: 1;
+  transition: opacity 180ms ease;
+  pointer-events: none;
+}
+
+.age-mask-1 { left: 9.15%; width: 19.2%; }
+.age-mask-2 { left: 29.75%; width: 19.1%; }
+.age-mask-3 { left: 50.45%; width: 19.0%; }
+.age-mask-4 { left: 71.75%; width: 19.15%; }
+
+.age-mask.is-revealed {
+  opacity: 0;
+}
+
+/* When declining, visually cover adults/children/age area in the fixed artwork. */
+.decline-mask {
+  position: absolute;
+  z-index: 13;
+  left: 8.9%;
+  top: 76.8%;
+  width: 82.3%;
+  height: 13.5%;
+  border-radius: 10px;
+  background: #fffaf0;
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity 200ms ease;
+}
+
+.invitation.is-declining .decline-mask {
+  opacity: 1;
+}
+
+/* Keep button interactive above mask */
+.submit-hitbox {
+  z-index: 20;
+}
+
+.submit-visible-text {
+  display: none;
+  align-items: center;
+  justify-content: center;
+  width: 100%;
+  height: 100%;
+  border-radius: inherit;
+  background: #062d5d;
+  color: #fff;
+  font-size: clamp(11px, 1.55vw, 17px);
+  font-weight: 700;
+  letter-spacing: 0.03em;
+  text-transform: uppercase;
+}
+
+.submit-hitbox.is-busy .submit-visible-text,
+.submit-hitbox.is-submitted .submit-visible-text {
+  display: flex;
+}
+
+.submit-hitbox.is-busy .submit-visible-text::before {
+  content: "";
+  width: 0.9em;
+  height: 0.9em;
+  margin-right: 0.6em;
+  border: 2px solid rgba(255,255,255,0.45);
+  border-top-color: #fff;
+  border-radius: 50%;
+  animation: rsvp-spin 0.8s linear infinite;
+}
+
+@keyframes rsvp-spin {
+  to { transform: rotate(360deg); }
+}
+
+.status-message {
+  display: none;
+  width: min(calc(100% - 24px), 720px);
+  margin: 14px auto 28px;
+  padding: 16px 18px;
+  border: 2px solid rgba(6,45,93,0.22);
+  border-radius: 14px;
+  background: #fffaf0;
+  color: #062d5d;
+  font-size: 16px;
+  font-weight: 700;
+  line-height: 1.35;
+  text-align: center;
+}
+
+.status-message::before {
+  content: "";
+  display: block;
+  margin-bottom: 4px;
+  font-size: 22px;
+}
+
+.status-message.success,
+.status-message.error {
+  display: block;
+}
+
+.status-message.error {
+  background: #fff2f2;
+  color: #8d1f28;
+}
+
+.invitation.is-submitted .overlay-control,
+.invitation.is-submitted .radio-hitbox {
+  pointer-events: none;
+}
+
+@media (max-width: 520px) {
+  .status-message {
+    font-size: 14px;
+    margin-top: 10px;
+  }
+}
+
+
+/* Clean final overrides */
+.age-mask,
+.decline-mask,
+.submit-visible-text {
+  display: none !important;
+}
+
+.invitation.is-declining .decline-mask {
+  opacity: 0 !important;
+}
+
+.age-control.is-hidden {
+  visibility: hidden;
+  pointer-events: none;
+}
+
+.submit-hitbox.is-busy,
+.submit-hitbox.is-submitted {
+  background: transparent !important;
+}
+
+.submit-hitbox:disabled {
+  opacity: 0.72;
+}
+
+.status-message {
+  display: none;
+  width: min(calc(100% - 24px), 720px);
+  margin: 12px auto 28px;
+  padding: 10px 14px;
+  border: 0;
+  border-radius: 8px;
+  background: rgba(255, 250, 240, 0.96);
+  color: #062d5d;
+  font-size: 15px;
+  font-weight: 700;
+  line-height: 1.35;
+  text-align: center;
+}
+
+.status-message::before {
+  content: none !important;
+}
+
+.status-message.success,
+.status-message.error,
+.status-message.loading {
+  display: block;
+}
+
+.status-message.error {
+  background: rgba(255, 242, 242, 0.98);
+  color: #8d1f28;
+}
+
+.status-message.loading {
+  color: #062d5d;
+}
+
+
+/* Nautical confirmation card */
+.status-message {
+  display: none;
+  position: relative;
+  width: min(calc(100% - 24px), 720px);
+  margin: 14px auto 30px;
+  padding: 18px 64px;
+  border: 2px solid #0b3767;
+  border-radius: 14px;
+  background: #fffaf0;
+  color: #0b3767 !important;
+  font-size: 16px;
+  font-weight: 700;
+  line-height: 1.35;
+  text-align: center;
+  box-shadow: 0 4px 0 rgba(6, 45, 93, 0.14);
+}
+
+.status-message::after {
+  content: "";
+  position: absolute;
+  inset: 7px;
+  border: 1px dashed rgba(11, 55, 103, 0.5);
+  border-radius: 9px;
+  pointer-events: none;
+}
+
+.status-message.success,
+.status-message.error,
+.status-message.loading {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 14px;
+}
+
+.status-text {
+  position: relative;
+  z-index: 1;
+  display: block;
+  color: #0b3767 !important;
+}
+
+.status-icon {
+  position: relative;
+  z-index: 1;
+  flex: 0 0 auto;
+  font-size: 28px;
+  line-height: 1;
+}
+
+.status-anchor {
+  color: #0b3767;
+}
+
+.status-boat {
+  color: #b71f2a;
+}
+
+.status-message.loading .status-boat,
+.status-message.loading .status-anchor {
+  opacity: 0.65;
+}
+
+.status-message.error {
+  border-color: #8d1f28;
+  color: #8d1f28 !important;
+  background: #fff6f4;
+}
+
+.status-message.error .status-text {
+  color: #8d1f28 !important;
+}
+
+@media (max-width: 520px) {
+  .status-message {
+    padding: 14px 46px;
+    font-size: 14px;
+  }
+
+  .status-icon {
+    font-size: 22px;
+  }
+}
+
+
+/* Final confirmation-card refinement */
+.status-message {
+  min-height: 0;
+  margin: 12px auto 24px;
+  padding: 11px 48px;
+  border: 1.5px solid #0b3767;
+  border-radius: 12px;
+  box-shadow: 0 2px 0 rgba(6, 45, 93, 0.10);
+}
+
+.status-message::after {
+  inset: 6px;
+  border-color: rgba(11, 55, 103, 0.38);
+  border-radius: 8px;
+}
+
+.status-message.success,
+.status-message.error,
+.status-message.loading {
+  gap: 12px;
+}
+
+.status-text {
+  white-space: nowrap;
+}
+
+.status-icon {
+  width: 28px;
+  height: 28px;
+  font-size: 0;
+}
+
+.status-icon svg {
+  display: block;
+  width: 100%;
+  height: 100%;
+}
+
+.status-anchor {
+  color: #0b3767;
+}
+
+.status-boat {
+  color: #0b3767;
+}
+
+/* Keep all printed age boxes visible; only disable interaction where inactive. */
+.age-control.is-hidden {
+  visibility: visible !important;
+  pointer-events: none;
+  color: transparent;
+}
+
+.age-control:disabled {
+  opacity: 1;
+}
+
+@media (max-width: 640px) {
+  .status-message {
+    padding: 10px 36px;
+  }
+
+  .status-text {
+    white-space: normal;
+  }
+
+  .status-icon {
+    width: 23px;
+    height: 23px;
+  }
+}
+
+
+/* Production venue artwork and closing card */
+.location-card,
+.closed-card {
+  width: min(calc(100% - 24px), 720px);
+  margin: 14px auto 26px;
+  color: #0b3767;
+}
+
+.location-card {
+  position: relative;
+  aspect-ratio: 1147 / 1372;
+  overflow: hidden;
+  animation: notice-fade 350ms ease-out both;
+}
+
+.location-card[hidden],
+.closed-card[hidden] {
+  display: none;
+}
+
+.location-card-image {
+  display: block;
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+  user-select: none;
+  -webkit-user-drag: none;
+}
+
+.location-field {
+  position: absolute;
+  z-index: 2;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin: 0;
+  padding: 0 2%;
+  overflow: hidden;
+  color: #0b3767;
+  font-family: Arial, Helvetica, sans-serif;
+  font-weight: 700;
+  line-height: 1.18;
+  text-align: center;
+  overflow-wrap: anywhere;
+  white-space: pre-line;
+}
+
+.location-venue {
+  left: 16.1%;
+  top: 25.7%;
+  width: 74.7%;
+  height: 6.4%;
+  font-size: clamp(14px, 3.05vw, 27px);
+  text-transform: uppercase;
+}
+
+.location-date {
+  left: 16.2%;
+  top: 40.5%;
+  width: 29.8%;
+  height: 5.2%;
+  font-size: clamp(12px, 2.35vw, 21px);
+}
+
+.location-time {
+  left: 62.4%;
+  top: 40.5%;
+  width: 27.8%;
+  height: 5.2%;
+  font-size: clamp(13px, 2.6vw, 23px);
+}
+
+.location-address {
+  left: 16.1%;
+  top: 54.6%;
+  width: 52.2%;
+  height: 5.4%;
+  font-size: clamp(10px, 2.1vw, 19px);
+}
+
+.location-coordinates {
+  left: 16.1%;
+  top: 68.8%;
+  width: 52.2%;
+  height: 5.3%;
+  font-size: clamp(12px, 2.35vw, 21px);
+  letter-spacing: 0;
+}
+
+.location-map-hitbox {
+  position: absolute;
+  z-index: 3;
+  left: 22.1%;
+  top: 81.6%;
+  width: 55.7%;
+  height: 8.8%;
+  padding: 0;
+  border: 0;
+  border-radius: 999px;
+  background: transparent;
+  cursor: pointer;
+  -webkit-tap-highlight-color: transparent;
+}
+
+.location-map-hitbox:focus-visible {
+  outline: 4px solid var(--focus);
+  outline-offset: 3px;
+}
+
+.location-map-hitbox:disabled {
+  cursor: default;
+  opacity: 0.6;
+}
+
+.closed-card {
+  border: 1.5px solid #0b3767;
+  border-radius: 14px;
+  background: #fffaf0;
+  padding: 16px 20px;
+  text-align: center;
+}
+
+.closed-card strong,
+.closed-card span {
+  display: block;
+}
+
+.closed-card strong {
+  font-size: 18px;
+  margin-bottom: 4px;
+}
+
+@media (max-width: 520px) {
+  .location-card,
+  .closed-card {
+    width: 100%;
+  }
+
+  .location-venue {
+    font-size: 13px;
+  }
+
+  .location-date,
+  .location-time,
+  .location-coordinates {
+    font-size: 11px;
+  }
+
+  .location-address {
+    font-size: 10px;
+  }
+}
+
+@keyframes notice-fade {
+  from {
+    opacity: 0;
+    transform: translateY(20px);
+  }
+  to {
+    opacity: 1;
+    transform: none;
+  }
+}
+
+html,
+body {
+  width: 100%;
+  max-width: 100%;
+  overflow-x: hidden;
+}
+
+.page-shell {
+  max-width: 100%;
+  overflow-x: clip;
+  padding-left: max(10px, env(safe-area-inset-left));
+  padding-right: max(10px, env(safe-area-inset-right));
+}
+
+.invitation,
+.location-card,
+.closed-card,
+.status-message {
+  max-width: 100%;
+}
+
+button,
+input,
+select,
+a {
+  touch-action: manipulation;
+}
+
+.radio-hitbox::before,
+.submit-hitbox::before {
+  content: "";
+  position: absolute;
+  inset: -12px;
+}
+
+@media (max-width: 520px) {
+  .page-shell {
+    padding-left: max(0px, env(safe-area-inset-left));
+    padding-right: max(0px, env(safe-area-inset-right));
+  }
+}

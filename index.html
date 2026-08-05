@@ -1,0 +1,177 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <meta name="description" content="RSVP for Captain Husain's first birthday">
+  <title>Captain Husain Is Turning One!</title>
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+  <main class="page-shell">
+    <form id="rsvpForm" class="invitation" novalidate>
+      <img
+        src="husain-rsvp-background.jpeg"
+        class="invitation-image"
+        alt="Captain Husain's first birthday invitation"
+        draggable="false"
+      >
+
+      <!-- 1. Guest name -->
+      <label class="sr-only" for="guestName">Guest name</label>
+      <input
+        id="guestName"
+        name="guestName"
+        class="overlay-control text-control guest-name"
+        type="text"
+        autocomplete="name"
+        aria-label="Guest name"
+        required
+      >
+
+      <!-- 2. Mobile number -->
+      <label class="sr-only" for="mobileNumber">Mobile number</label>
+      <input
+        id="mobileNumber"
+        name="mobileNumber"
+        class="overlay-control text-control mobile-number"
+        type="tel"
+        inputmode="tel"
+        autocomplete="tel"
+        aria-label="Mobile number"
+        required
+      >
+
+      <!-- 3. Attendance -->
+      <fieldset class="attendance-layer">
+        <legend class="sr-only">Will you be attending?</legend>
+
+        <label class="radio-hitbox radio-yes" aria-label="Yes, we will be there">
+          <input type="radio" name="attending" value="Yes" required>
+          <span class="radio-dot" aria-hidden="true"></span>
+        </label>
+
+        <label class="radio-hitbox radio-no" aria-label="Sorry, we will not be able to attend">
+          <input type="radio" name="attending" value="No" required>
+          <span class="radio-dot" aria-hidden="true"></span>
+        </label>
+      </fieldset>
+
+      <!-- 4. Adults -->
+      <label class="sr-only" for="adultCount">Number of adults</label>
+      <select
+        id="adultCount"
+        name="adultCount"
+        class="overlay-control select-control adult-count"
+        aria-label="Number of adults"
+        required
+      >
+        <option value="" selected disabled></option>
+        <option value="1">1</option>
+        <option value="2">2</option>
+        <option value="3">3</option>
+        <option value="4">4</option>
+        <option value="5">5</option>
+        <option value="6">6</option>
+        <option value="7">7</option>
+        <option value="8">8</option>
+        <option value="9">9</option>
+        <option value="10">10</option>
+      </select>
+
+      <!-- 5. Children -->
+      <label class="sr-only" for="childCount">Number of children</label>
+      <select
+        id="childCount"
+        name="childCount"
+        class="overlay-control select-control child-count"
+        aria-label="Number of children"
+      >
+        <option value="" selected disabled></option>
+        <option value="0">0</option>
+        <option value="1">1</option>
+        <option value="2">2</option>
+        <option value="3">3</option>
+        <option value="4">4</option>
+      </select>
+
+      <!-- 6. Child ages -->
+      <label class="sr-only" for="childAge1">Child 1 age</label>
+      <select id="childAge1" name="childAge1"
+        class="overlay-control select-control age-control child-age-1"
+        aria-label="Child 1 age" disabled></select>
+
+      <label class="sr-only" for="childAge2">Child 2 age</label>
+      <select id="childAge2" name="childAge2"
+        class="overlay-control select-control age-control child-age-2"
+        aria-label="Child 2 age" disabled></select>
+
+      <label class="sr-only" for="childAge3">Child 3 age</label>
+      <select id="childAge3" name="childAge3"
+        class="overlay-control select-control age-control child-age-3"
+        aria-label="Child 3 age" disabled></select>
+
+      <label class="sr-only" for="childAge4">Child 4 age</label>
+      <select id="childAge4" name="childAge4"
+        class="overlay-control select-control age-control child-age-4"
+        aria-label="Child 4 age" disabled></select>
+
+      <!-- Submit button sits exactly on the printed button -->
+      <button id="submitButton" class="submit-hitbox" type="submit">
+        <span class="sr-only">Join the Crew</span>
+      </button>
+    </form>
+
+    <section id="venueCard" class="location-card" hidden>
+      <img
+        id="venueArtwork"
+        class="location-card-image"
+        data-src="location card.png"
+        loading="lazy"
+        alt="Captain's Notice"
+        draggable="false"
+      >
+      <h2 id="venueName" class="location-field location-venue"></h2>
+      <p id="venueDate" class="location-field location-date"></p>
+      <p id="venueTime" class="location-field location-time"></p>
+      <p id="venueAddress" class="location-field location-address"></p>
+      <p id="venueCoordinatesText" class="location-field location-coordinates"></p>
+      <button
+        id="venueMapLink"
+        class="location-map-hitbox"
+        type="button"
+        aria-label="Open venue in Google Maps"
+        disabled
+      ></button>
+    </section>
+
+    <section id="closedCard" class="closed-card" hidden>
+      <strong>RSVPs are now closed.</strong>
+      <span>For assistance, please contact the host.</span>
+    </section>
+
+    <div id="statusMessage" class="status-message" role="status" aria-live="polite">
+      <span class="status-icon status-anchor" aria-hidden="true">
+        <svg viewBox="0 0 64 64" role="img" aria-label="Anchor">
+          <circle cx="32" cy="10" r="6" fill="none" stroke="currentColor" stroke-width="5"/>
+          <path d="M32 16v29M22 27h20M16 36c0 11 7 18 16 18s16-7 16-18" fill="none" stroke="currentColor" stroke-width="5" stroke-linecap="round"/>
+          <path d="M12 37l4-5 5 4M52 37l-4-5-5 4" fill="none" stroke="currentColor" stroke-width="5" stroke-linecap="round" stroke-linejoin="round"/>
+        </svg>
+      </span>
+      <span id="statusText" class="status-text"></span>
+      <span class="status-icon status-boat" aria-hidden="true">
+        <svg viewBox="0 0 80 64" role="img" aria-label="Sailboat">
+          <path d="M12 48h56l-8 10H20z" fill="#b71f2a" stroke="#0b3767" stroke-width="3" stroke-linejoin="round"/>
+          <path d="M40 10v38" stroke="#0b3767" stroke-width="3" stroke-linecap="round"/>
+          <path d="M39 12L18 43h21z" fill="#fffaf0" stroke="#0b3767" stroke-width="3" stroke-linejoin="round"/>
+          <path d="M42 15l19 28H42z" fill="#0b3767" stroke="#0b3767" stroke-width="3" stroke-linejoin="round"/>
+          <path d="M40 10l12 4-12 4z" fill="#b71f2a"/>
+          <path d="M8 60c8-4 16-4 24 0s16 4 24 0 12-4 16 0" fill="none" stroke="#4aa3df" stroke-width="3" stroke-linecap="round"/>
+        </svg>
+      </span>
+    </div>
+  </main>
+
+  <script src="script.js"></script>
+</body>
+</html>

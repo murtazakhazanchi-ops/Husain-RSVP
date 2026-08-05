@@ -1,0 +1,147 @@
+HUSAIN RSVP — COMPLETE PRODUCTION SYSTEM
+
+Included
+========
+PUBLIC RSVP
+- index.html
+- style.css
+- script.js
+- husain-rsvp-background.jpeg
+
+HOST DASHBOARD
+- dashboard.html
+- dashboard.css
+- dashboard.js
+
+BACKEND
+- AppsScript-Code.gs
+
+Current Apps Script URL
+=======================
+https://script.google.com/macros/s/AKfycbwo6kNofaeRAnITieVxDRccMurllRKSFmO-cElHxIYI3ytJJn3MfjKCOvtqdtva93_q/exec
+
+IMPORTANT: Upgrade the Apps Script backend
+==========================================
+1. Open the Google Sheet.
+2. Extensions → Apps Script.
+3. Replace the current code with AppsScript-Code.gs.
+4. At the top, replace:
+   CHANGE-THIS-TO-A-LONG-PRIVATE-ADMIN-KEY
+   with a long private key known only to you.
+5. Save.
+6. Deploy → Manage deployments.
+7. Edit the existing Web app deployment.
+8. Choose New version.
+9. Deploy.
+10. Keep the same /exec URL.
+
+The dashboard will not open until ADMIN_KEY is changed.
+
+Dashboard features
+==================
+- Live summary totals
+- Search by guest, mobile or RSVP ID
+- Filters
+- Edit RSVP records
+- Created/Updated/Admin Updated status
+- CSV export
+- Excel-compatible export
+- Print / Save as PDF
+- Attendance and guest-mix analytics
+- Child-age summary
+- Venue announcement
+- Google Maps link
+- WhatsApp share message
+- QR code
+- Public RSVP URL settings
+
+Venue announcement
+==================
+Open dashboard.html → Venue & Sharing.
+Once “Venue announced” is enabled and saved, the public RSVP page displays
+the venue card automatically without changing the invitation artwork.
+
+Automatic RSVP closing
+======================
+The public form closes automatically at:
+9 August 2026, 12:00 a.m. India time
+This means guests can submit through 8 August 2026.
+
+Hosting
+=======
+Upload all public and dashboard files together to Netlify:
+- index.html is the public RSVP link
+- dashboard.html is the host dashboard
+
+Keep the dashboard URL private. The admin key is still required to load data.
+
+
+PERSONALIZED WHATSAPP VENUE ANNOUNCEMENTS
+========================================
+The dashboard now includes “Venue Announcements”.
+
+Before using it:
+1. Open Venue & Sharing.
+2. Enter venue name, address, Google Maps URL and optional notes.
+3. Enable “Venue announced”.
+4. Save settings.
+
+Then:
+1. Open Venue Announcements.
+2. Review each personalized message.
+3. Click WhatsApp to open the guest’s chat with the message prefilled.
+4. Press Send manually inside WhatsApp.
+5. Return to the dashboard and click Mark Sent.
+
+Features:
+- Guest name in every message
+- Adults and children count in every message
+- Date, time, venue and directions
+- Optional parking / arrival notes
+- Automatic India country code for 10-digit numbers
+- Pending / Sent tracking
+- Send Next Pending
+- Copy message
+- Reset statuses
+
+Important:
+A normal webpage cannot press WhatsApp’s Send button automatically.
+The final Send action must be completed manually unless a paid, approved
+WhatsApp Business API integration is used.
+
+
+SIMPLIFIED MOBILE DASHBOARD
+===========================
+The dashboard has been completely redesigned.
+
+Access key:
+212-34
+
+Important:
+The Apps Script backend file included in this package already uses the same key.
+Replace your current Apps Script code with AppsScript-Code.gs and redeploy a new version.
+
+Main sections:
+- Overview: totals and interactive charts
+- Guests: search, filters, edit, exports
+- Venue: one combined venue-and-sharing form
+- Messages: personalized WhatsApp venue messages
+
+The old separate “Venue & Sharing” and “Venue Announcements” popups have been removed.
+Everything is now available in clear mobile tabs.
+
+FINAL PUBLISH VERSION
+=====================
+- No emoji icons are used in the dashboard.
+- All interface icons are inline SVG.
+- Mobile alignment and safe-area spacing are finalized.
+- Venue controls are simplified and the save button remains thumb-accessible.
+- Message preview is collapsed by default.
+- Charts remain interactive.
+- Access key: 212-34
+
+HORIZONTAL SCROLL FIX
+=====================
+The dashboard now hard-constrains Chart.js canvases, grid children and all cards
+to the device viewport. Horizontal scrolling is disabled while normal vertical
+scrolling remains available.
