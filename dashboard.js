@@ -1,6 +1,6 @@
 "use strict";
 const API_URL="https://script.google.com/macros/s/AKfycbwo6kNofaeRAnITieVxDRccMurllRKSFmO-cElHxIYI3ytJJn3MfjKCOvtqdtva93_q/exec",KEY="212-34";
-let key="",data=null,filtered=[],editing=null,charts={};
+let key="",data=null,filtered=[],editing=null,charts={},dashboardLoaded=false;
 const $=id=>document.getElementById(id);
 
 document.addEventListener("DOMContentLoaded",()=>{
@@ -37,7 +37,7 @@ async function load(first=false){
     if(!j.success||!j.summary||!Array.isArray(j.rows)) throw Error(j.message||"Unable to load dashboard.");
     data=j; $("loginView").hidden=true; $("dashboardView").hidden=false;
     $("lastUpdatedText").textContent=new Date().toLocaleTimeString([],{hour:"2-digit",minute:"2-digit"});
-    renderAll(); toast(first?"Dashboard ready.":"Dashboard synced.");
+    renderAll(); dashboardLoaded=true; toast(first?"Dashboard ready.":"Dashboard synced.");
   }catch(e){$("loginError").textContent=e.message;$("loginView").hidden=false;$("dashboardView").hidden=true}
 }
 function renderAll(){eventStatus();summary();drawCharts();recent();filterGuests();venueForm();messages()}
@@ -89,7 +89,7 @@ function guests(){
   document.querySelectorAll(".msg").forEach(b=>b.onclick=()=>{const r=data.rows.find(x=>x.rsvpId===b.dataset.id);if(r)openGuestWhatsApp(r)});
 }
 function venueForm(){
-  const c=data.config||{};$("venueAnnounced").checked=!!(c.publishVenue??c.venueAnnounced);$("venueNameInput").value=c.venueName||"";$("venueAddressInput").value=c.venueAddress||"";$("mapsUrlInput").value=c.mapsUrl||"";$("latitudeInput").value=c.latitude||"";$("longitudeInput").value=c.longitude||"";$("venueNotesInput").value=c.venueNotes||"";$("publicRsvpUrlInput").value=c.publicRsvpUrl||"";venuePreview();if(c.publicRsvpUrl)qr(false);
+  const c=data.config||{};$("venueAnnounced").checked=!!(c.publishVenue??c.venueAnnounced);$("venueNameInput").value=c.venueName||"";$("venueAddressInput").value=c.venueAddress||"";$("mapsUrlInput").value=c.mapsUrl||"";$("latitudeInput").value=c.latitude||"";$("longitudeInput").value=c.longitude||"";$("venueNotesInput").value=c.venueNotes||"";$("publicRsvpUrlInput").value=c.publicRsvpUrl||"";venuePreview();
 }
 function coordUrl(){const lat=$("latitudeInput").value.trim(),lng=$("longitudeInput").value.trim();return lat&&lng?`https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(`${lat},${lng}`)}`:""}
 function venuePreview(){
@@ -107,7 +107,7 @@ async function saveVenue(){
 function publicUrl(){return $("publicRsvpUrlInput")?.value.trim()||data?.config?.publicRsvpUrl||""}
 function needPublicUrl(){const u=publicUrl();if(u)return u;$("venueError").textContent="Public RSVP Webpage URL is required.";tab("venue");return""}
 function qrCodeAvailable(){if(typeof QRCode!=="undefined"&&typeof QRCode.toCanvas==="function")return true;console.warn("QRCode library unavailable.");return false}
-function qr(showError=true){const u=showError?needPublicUrl():publicUrl();if(!u||!qrCodeAvailable())return;$("qrPanel").hidden=false;QRCode.toCanvas($("qrCanvas"),u,{width:180,margin:1},()=>{})}
+function qr(showError=true){const u=showError?needPublicUrl():publicUrl();if(!dashboardLoaded||!u||!qrCodeAvailable())return;$("qrPanel").hidden=false;QRCode.toCanvas($("qrCanvas"),u,{width:180,margin:1},()=>{})}
 async function copyLink(){const u=needPublicUrl();if(!u)return;try{await navigator.clipboard.writeText(u);toast("RSVP link copied.")}catch{toast("Could not copy link.",true)}}
 function shareLink(){const u=needPublicUrl();if(!u)return;window.open(`https://wa.me/?text=${encodeURIComponent(`Captain Husain is turning one. Please RSVP by 8 August 2026:\n${u}`)}`,"_blank","noopener")}
 function acceptedRsvps(){return data.rows.filter(r=>r.attending==="Yes")}
