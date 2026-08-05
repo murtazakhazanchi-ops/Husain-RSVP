@@ -132,17 +132,20 @@
         draggable="false"
       >
       <h2 id="venueName" class="location-field location-venue"></h2>
-      <p id="venueDate" class="location-field location-date"></p>
+      <p id="venueDate" class="location-field location-date">
+        <span id="venueDateDay" class="location-date-day"></span>
+        <span id="venueDateValue" class="location-date-value"></span>
+      </p>
       <p id="venueTime" class="location-field location-time"></p>
       <p id="venueAddress" class="location-field location-address"></p>
       <p id="venueCoordinatesText" class="location-field location-coordinates"></p>
-      <button
+      <a
         id="venueMapLink"
         class="location-map-hitbox"
-        type="button"
         aria-label="Open venue in Google Maps"
-        disabled
-      ></button>
+        target="_blank"
+        rel="noopener noreferrer"
+      ></a>
     </section>
 
     <section id="closedCard" class="closed-card" hidden>

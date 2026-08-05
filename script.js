@@ -16,6 +16,8 @@ const venueCard = document.getElementById("venueCard");
 const venueArtwork = document.getElementById("venueArtwork");
 const venueName = document.getElementById("venueName");
 const venueDate = document.getElementById("venueDate");
+const venueDateDay = document.getElementById("venueDateDay");
+const venueDateValue = document.getElementById("venueDateValue");
 const venueTime = document.getElementById("venueTime");
 const venueAddress = document.getElementById("venueAddress");
 const venueCoordinatesText = document.getElementById("venueCoordinatesText");
@@ -242,11 +244,15 @@ function formatDms(value, positive, negative) {
   return `${degrees}°${String(minutes).padStart(2, "0")}'${String(seconds).padStart(2, "0")}"${hemisphere}`;
 }
 
-venueMapLink.addEventListener("click", () => {
-  const googleMapsUrl = venueMapLink.dataset.mapsUrl || "";
-  if (!googleMapsUrl || venueMapLink.disabled) return;
-  window.open(googleMapsUrl, "_blank");
-});
+function setVenueDate(value) {
+  const lines = String(value || "Saturday\n5 September 2026")
+    .split(/\r?\n/)
+    .map((line) => line.trim())
+    .filter(Boolean);
+
+  venueDateDay.textContent = lines[0] || "Saturday";
+  venueDateValue.textContent = lines.slice(1).join(" ") || "5 September 2026";
+}
 
 async function loadPublicConfig() {
   try {
@@ -260,6 +266,7 @@ async function loadPublicConfig() {
     const venueAnnounced = config.venueAnnounced ?? config.publishVenue;
     if (!venueAnnounced) {
       venueCard.hidden = true;
+      venueCard.classList.remove("is-visible");
       return;
     }
 
@@ -267,22 +274,28 @@ async function loadPublicConfig() {
     const longitude = toNumber(config.longitude);
 
     venueName.textContent = config.venueName || "Venue announced";
-    venueDate.textContent = config.venueDate || config.date || "Saturday\n5 September 2026";
+    setVenueDate(config.venueDate || config.date);
     venueTime.textContent = config.venueTime || config.time || "7:30 PM";
     venueAddress.textContent = config.venueAddress || "";
 
     if (latitude !== null && longitude !== null) {
       venueCoordinatesText.textContent = `${formatDms(latitude, "N", "S")}\n${formatDms(longitude, "E", "W")}`;
+      venueCoordinatesText.hidden = false;
     } else {
       venueCoordinatesText.textContent = "";
+      venueCoordinatesText.hidden = true;
     }
 
     if (config.mapsUrl) {
       venueMapLink.dataset.mapsUrl = config.mapsUrl;
-      venueMapLink.disabled = false;
+      venueMapLink.href = config.mapsUrl;
+      venueMapLink.removeAttribute("aria-disabled");
+      venueMapLink.classList.remove("is-disabled");
     } else {
       venueMapLink.dataset.mapsUrl = "";
-      venueMapLink.disabled = true;
+      venueMapLink.removeAttribute("href");
+      venueMapLink.setAttribute("aria-disabled", "true");
+      venueMapLink.classList.add("is-disabled");
     }
 
     if (!venueArtwork.getAttribute("src")) {
@@ -290,6 +303,7 @@ async function loadPublicConfig() {
     }
 
     venueCard.hidden = false;
+    venueCard.classList.add("is-visible");
   } catch (error) {
     console.warn("Venue configuration could not be loaded.", error);
   }

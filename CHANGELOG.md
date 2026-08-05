@@ -10,12 +10,17 @@ Modified files:
   - Added one transparent clickable layer over the printed Get Directions button.
 
 - `style.css`
+  - Refined Captain's Notice overlay alignment for venue name, date, address, coordinates, and Get Directions hit area.
+  - Improved address wrapping, date hierarchy, mobile sizing, section spacing, and reduced-motion behavior.
   - Removed styling for the previous HTML-generated venue card.
   - Added proportional `1147 / 1372` artwork layout for `location card.png`.
   - Added responsive percentage-based text and button overlay positioning.
   - Preserved fade-in animation, safe-area support, touch behavior, and horizontal overflow containment.
 
 - `script.js`
+  - Added one-time Captain's Notice visible state for the entrance animation.
+  - Improved venue date rendering with separate visual hierarchy for weekday and date.
+  - Disabled the Google Maps overlay link safely when no Maps URL is configured.
   - Lazy-loads `location card.png` only after the venue is announced.
   - Supports `publishVenue` while retaining `venueAnnounced` compatibility.
   - Renders venue name, date, time, address, and compact two-line DMS coordinates on top of the official artwork.

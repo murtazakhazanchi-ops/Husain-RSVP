@@ -668,7 +668,7 @@ body {
 .location-card,
 .closed-card {
   width: min(calc(100% - 24px), 720px);
-  margin: 14px auto 26px;
+  margin: 22px auto 26px;
   color: #0b3767;
 }
 
@@ -676,6 +676,9 @@ body {
   position: relative;
   aspect-ratio: 1147 / 1372;
   overflow: hidden;
+}
+
+.location-card.is-visible {
   animation: notice-fade 350ms ease-out both;
 }
 
@@ -713,7 +716,7 @@ body {
 
 .location-venue {
   left: 16.1%;
-  top: 25.7%;
+  top: 24.65%;
   width: 74.7%;
   height: 6.4%;
   font-size: clamp(14px, 3.05vw, 27px);
@@ -725,7 +728,19 @@ body {
   top: 40.5%;
   width: 29.8%;
   height: 5.2%;
-  font-size: clamp(12px, 2.35vw, 21px);
+  flex-direction: column;
+  gap: 0.08em;
+  line-height: 1.05;
+}
+
+.location-date-day {
+  font-size: clamp(10px, 1.75vw, 16px);
+  font-weight: 700;
+}
+
+.location-date-value {
+  font-size: clamp(12px, 2.3vw, 21px);
+  font-weight: 800;
 }
 
 .location-time {
@@ -741,7 +756,12 @@ body {
   top: 54.6%;
   width: 52.2%;
   height: 5.4%;
-  font-size: clamp(10px, 2.1vw, 19px);
+  padding-inline: 3%;
+  font-size: clamp(9px, 1.85vw, 17px);
+  line-height: 1.18;
+  overflow-wrap: normal;
+  text-wrap: balance;
+  white-space: normal;
 }
 
 .location-coordinates {
@@ -751,6 +771,7 @@ body {
   height: 5.3%;
   font-size: clamp(12px, 2.35vw, 21px);
   letter-spacing: 0;
+  line-height: 1.08;
 }
 
 .location-map-hitbox {
@@ -773,9 +794,11 @@ body {
   outline-offset: 3px;
 }
 
-.location-map-hitbox:disabled {
+.location-map-hitbox.is-disabled {
+  background: rgba(255, 250, 240, 0.1);
   cursor: default;
   opacity: 0.6;
+  pointer-events: none;
 }
 
 .closed-card {
@@ -802,29 +825,68 @@ body {
     width: 100%;
   }
 
+  .location-card {
+    margin-top: 16px;
+  }
+
   .location-venue {
     font-size: 13px;
   }
 
-  .location-date,
   .location-time,
   .location-coordinates {
     font-size: 11px;
   }
 
+  .location-date-day {
+    font-size: 9px;
+  }
+
+  .location-date-value {
+    font-size: 11px;
+  }
+
   .location-address {
+    font-size: 9px;
+  }
+}
+
+@media (max-width: 360px) {
+  .location-date {
+    height: 6.6%;
+    gap: 0;
+    line-height: 0.98;
+  }
+
+  .location-date-day {
+    font-size: 8px;
+  }
+
+  .location-date-value {
+    font-size: 9px;
+  }
+
+  .location-coordinates {
+    height: 5.9%;
     font-size: 10px;
+    line-height: 1;
   }
 }
 
 @keyframes notice-fade {
   from {
     opacity: 0;
-    transform: translateY(20px);
+    transform: translateY(16px);
   }
   to {
     opacity: 1;
     transform: none;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .location-card.is-visible {
+    animation: none;
   }
 }
 
