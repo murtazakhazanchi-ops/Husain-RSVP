@@ -106,7 +106,8 @@ async function saveVenue(){
 }
 function publicUrl(){return $("publicRsvpUrlInput")?.value.trim()||data?.config?.publicRsvpUrl||""}
 function needPublicUrl(){const u=publicUrl();if(u)return u;$("venueError").textContent="Public RSVP Webpage URL is required.";tab("venue");return""}
-function qr(showError=true){const u=showError?needPublicUrl():publicUrl();if(!u)return;$("qrPanel").hidden=false;QRCode.toCanvas($("qrCanvas"),u,{width:180,margin:1},()=>{})}
+function qrCodeAvailable(){if(typeof QRCode!=="undefined"&&typeof QRCode.toCanvas==="function")return true;console.warn("QRCode library unavailable.");return false}
+function qr(showError=true){const u=showError?needPublicUrl():publicUrl();if(!u||!qrCodeAvailable())return;$("qrPanel").hidden=false;QRCode.toCanvas($("qrCanvas"),u,{width:180,margin:1},()=>{})}
 async function copyLink(){const u=needPublicUrl();if(!u)return;try{await navigator.clipboard.writeText(u);toast("RSVP link copied.")}catch{toast("Could not copy link.",true)}}
 function shareLink(){const u=needPublicUrl();if(!u)return;window.open(`https://wa.me/?text=${encodeURIComponent(`Captain Husain is turning one. Please RSVP by 8 August 2026:\n${u}`)}`,"_blank","noopener")}
 function acceptedRsvps(){return data.rows.filter(r=>r.attending==="Yes")}
