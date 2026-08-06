@@ -31,6 +31,7 @@ Modified files:
   - Added as the official Captain's Notice artwork template used by the public RSVP page.
 
 - `dashboard.html`
+  - Adds chart summary hooks for the Attendance and Guest Mix doughnut cards.
   - Renamed ambiguous dashboard statistics and filters to distinguish attendee totals from RSVP response counts.
   - Updated the Attendance chart title to "Accepted vs Declined RSVPs".
   - Removes input placeholders.
@@ -40,12 +41,15 @@ Modified files:
   - Renames reset and close controls for the final SVG-icon-only interface.
 
 - `dashboard.css`
+  - Polishes doughnut chart center typography, title wrapping, card balance, and summary spacing.
   - Improves dashboard touch target sizing, close button SVG styling, preview text wrapping, and mobile containment.
   - Adds supporting styles for explicit guest metadata and venue coordinate preview.
 
 - `dashboard.js`
+  - Simplifies Attendance chart legend labels to Accepted and Declined while preserving existing calculations.
+  - Aligns Attendance and Guest Mix center text hierarchy and adds dynamic summary lines.
   - Renamed summary cards to Total Attending, Accepted RSVPs, Declined RSVPs, and RSVP Responses.
-  - Updated Attendance chart legend labels to Accepted RSVPs and Declined RSVPs.
+  - Updated Attendance chart legend labels to Accepted and Declined.
   - Replaced percentage-based Attendance chart center text with the accepted RSVP count.
   - Updated event status values to show Published/Pending venue state, "Sent X of Y" venue messages, and explicit RSVP terminology.
   - Updated recent RSVP and guest status badges to use Accepted RSVP / Declined RSVP language.
