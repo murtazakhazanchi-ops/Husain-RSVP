@@ -61,6 +61,15 @@ function summary(){
 function plural(n,singular,pluralText=`${singular}s`){return Number(n)===1?singular:pluralText}
 function doughnutOptions(){return{responsive:true,maintainAspectRatio:false,cutout:"68%",layout:{padding:{top:2,bottom:2}},plugins:{legend:{position:"bottom",labels:{usePointStyle:true,padding:24,boxWidth:8,boxHeight:8,font:{size:12,weight:"700"}}}}}}
 const legendSpacingPlugin={id:"legendSpacing",afterInit(chart){const legend=chart.legend;if(!legend||legend._spaced)return;const fit=legend.fit;legend.fit=function(){fit.bind(legend)();this.height+=16};legend._spaced=true}};
+function positionChartCenter(chart){
+  const area=chart.chartArea,wrap=chart.canvas.closest(".chart-with-center"),center=wrap?.querySelector(".chart-center");
+  if(!area||!center)return;
+  center.style.setProperty("--chart-center-top",`${area.top}px`);
+  center.style.setProperty("--chart-center-left",`${area.left}px`);
+  center.style.setProperty("--chart-center-width",`${area.right-area.left}px`);
+  center.style.setProperty("--chart-center-height",`${area.bottom-area.top}px`);
+}
+const centerOverlayPlugin={id:"centerOverlayBounds",afterLayout:positionChartCenter,afterResize:positionChartCenter};
 function drawCharts(){
   if(!data||typeof Chart==="undefined")return;
   Object.values(charts).forEach(c=>c?.destroy()); charts={};
@@ -69,8 +78,8 @@ function drawCharts(){
   $("guestMixCenter").innerHTML=`<strong>${gp}%</strong><span>Adults</span>`;
   $("attendanceSummary").textContent=`${s.acceptedFamilies} accepted • ${s.declinedFamilies} declined`;
   $("guestMixSummary").textContent=`${s.adults} ${plural(s.adults,"adult")} • ${s.children} ${plural(s.children,"child","children")}`;
-  charts.a=new Chart($("attendanceChart"),{type:"doughnut",data:{labels:["Accepted","Declined"],datasets:[{data:[s.acceptedFamilies,s.declinedFamilies],backgroundColor:["#28C76F","#E53935"],borderWidth:0,hoverOffset:8}]},options:doughnutOptions(),plugins:[legendSpacingPlugin]});
-  charts.g=new Chart($("guestMixChart"),{type:"doughnut",data:{labels:["Adults","Children"],datasets:[{data:[s.adults,s.children],backgroundColor:["#163D72","#F5B335"],borderWidth:0,hoverOffset:8}]},options:doughnutOptions(),plugins:[legendSpacingPlugin]});
+  charts.a=new Chart($("attendanceChart"),{type:"doughnut",data:{labels:["Accepted","Declined"],datasets:[{data:[s.acceptedFamilies,s.declinedFamilies],backgroundColor:["#28C76F","#E53935"],borderWidth:0,hoverOffset:8}]},options:doughnutOptions(),plugins:[legendSpacingPlugin,centerOverlayPlugin]});
+  charts.g=new Chart($("guestMixChart"),{type:"doughnut",data:{labels:["Adults","Children"],datasets:[{data:[s.adults,s.children],backgroundColor:["#163D72","#F5B335"],borderWidth:0,hoverOffset:8}]},options:doughnutOptions(),plugins:[legendSpacingPlugin,centerOverlayPlugin]});
   const counts={}; data.rows.forEach(r=>r.childAges.forEach(a=>counts[a]=(counts[a]||0)+1)); const e=Object.entries(counts);
   charts.age=new Chart($("ageChart"),{type:"bar",data:{labels:e.map(x=>x[0]),datasets:[{data:e.map(x=>x[1]),backgroundColor:"#3F87C5",borderRadius:7}]},options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{display:false}},scales:{y:{beginAtZero:true,ticks:{precision:0}},x:{grid:{display:false}}}}});
 }
