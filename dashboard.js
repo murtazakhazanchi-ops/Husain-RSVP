@@ -59,16 +59,16 @@ function summary(){
   $("summaryCards").innerHTML=items.map(x=>`<article class="summary-card ${x[2]?"primary":""}"><span>${x[0]}</span><strong>${x[1]}</strong></article>`).join("");
 }
 function plural(n,singular,pluralText=`${singular}s`){return Number(n)===1?singular:pluralText}
-function doughnutOptions(){return{responsive:true,maintainAspectRatio:false,cutout:"68%",layout:{padding:{top:2,bottom:2}},plugins:{legend:{position:"bottom",labels:{usePointStyle:true,padding:22,boxWidth:8,boxHeight:8,font:{size:12,weight:"700"}}}}}}
-const legendSpacingPlugin={id:"legendSpacing",afterInit(chart){const legend=chart.legend;if(!legend||legend._spaced)return;const fit=legend.fit;legend.fit=function(){fit.bind(legend)();this.height+=10};legend._spaced=true}};
+function doughnutOptions(){return{responsive:true,maintainAspectRatio:false,cutout:"68%",layout:{padding:{top:2,bottom:2}},plugins:{legend:{position:"bottom",labels:{usePointStyle:true,padding:24,boxWidth:8,boxHeight:8,font:{size:12,weight:"700"}}}}}}
+const legendSpacingPlugin={id:"legendSpacing",afterInit(chart){const legend=chart.legend;if(!legend||legend._spaced)return;const fit=legend.fit;legend.fit=function(){fit.bind(legend)();this.height+=16};legend._spaced=true}};
 function drawCharts(){
   if(!data||typeof Chart==="undefined")return;
   Object.values(charts).forEach(c=>c?.destroy()); charts={};
   const s=data.summary,gp=s.totalGuests?Math.round(s.adults/s.totalGuests*100):0;
   $("attendanceCenter").innerHTML=`<strong>${s.acceptedFamilies}</strong><span>Accepted</span>`;
   $("guestMixCenter").innerHTML=`<strong>${gp}%</strong><span>Adults</span>`;
-  $("attendanceSummary").textContent=`${s.acceptedFamilies} accepted · ${s.declinedFamilies} declined`;
-  $("guestMixSummary").textContent=`${s.adults} ${plural(s.adults,"adult")} · ${s.children} ${plural(s.children,"child","children")}`;
+  $("attendanceSummary").textContent=`${s.acceptedFamilies} accepted • ${s.declinedFamilies} declined`;
+  $("guestMixSummary").textContent=`${s.adults} ${plural(s.adults,"adult")} • ${s.children} ${plural(s.children,"child","children")}`;
   charts.a=new Chart($("attendanceChart"),{type:"doughnut",data:{labels:["Accepted","Declined"],datasets:[{data:[s.acceptedFamilies,s.declinedFamilies],backgroundColor:["#28C76F","#E53935"],borderWidth:0,hoverOffset:8}]},options:doughnutOptions(),plugins:[legendSpacingPlugin]});
   charts.g=new Chart($("guestMixChart"),{type:"doughnut",data:{labels:["Adults","Children"],datasets:[{data:[s.adults,s.children],backgroundColor:["#163D72","#F5B335"],borderWidth:0,hoverOffset:8}]},options:doughnutOptions(),plugins:[legendSpacingPlugin]});
   const counts={}; data.rows.forEach(r=>r.childAges.forEach(a=>counts[a]=(counts[a]||0)+1)); const e=Object.entries(counts);
