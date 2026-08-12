@@ -42,6 +42,13 @@ function doGet(event) {
       });
     }
 
+    if (action === "rsvpStatus") {
+      return jsonResponse({
+        success: true,
+        rsvpOpen: isRsvpOpen()
+      });
+    }
+
     if (action === "dashboard") {
       assertAdminKey(event.parameter.key);
       return jsonResponse(getDashboardPayload());
@@ -77,6 +84,11 @@ function doPost(event) {
       return jsonResponse(saveConfig(data.config || {}));
     }
 
+    if (data.mode === "setRsvpOpen") {
+      assertAdminKey(data.adminKey);
+      return jsonResponse(saveRsvpOpen(data.rsvpOpen));
+    }
+
     if (data.mode === "markAnnouncement") {
       assertAdminKey(data.adminKey);
       return jsonResponse(markAnnouncementStatus(data.rsvpId, data.status));
@@ -85,6 +97,14 @@ function doPost(event) {
     if (data.mode === "resetAnnouncements") {
       assertAdminKey(data.adminKey);
       return jsonResponse(resetAnnouncementStatuses());
+    }
+
+    if (!isRsvpOpen()) {
+      return jsonResponse({
+        success: false,
+        closed: true,
+        message: "RSVPs are now closed. For assistance, please contact the host."
+      });
     }
 
     validateSubmission(data);
@@ -254,10 +274,15 @@ function adminUpdateRsvp(data) {
 
 function saveConfig(config) {
   const sheet = getConfigSheet();
+  const currentConfig = getPublicConfig();
   const publishVenue = Object.prototype.hasOwnProperty.call(config, "publishVenue")
     ? Boolean(config.publishVenue)
     : Boolean(config.venueAnnounced);
+  const rsvpOpen = Object.prototype.hasOwnProperty.call(config, "rsvpOpen")
+    ? Boolean(config.rsvpOpen)
+    : currentConfig.rsvpOpen !== false;
   const rows = [
+    ["rsvpOpen", rsvpOpen],
     ["publishVenue", publishVenue],
     ["venueAnnounced", publishVenue],
     ["venueName", sanitizeCell(config.venueName || "")],
@@ -278,10 +303,21 @@ function saveConfig(config) {
   };
 }
 
+function saveRsvpOpen(value) {
+  const config = getPublicConfig();
+  config.rsvpOpen = value !== false;
+  return saveConfig(config);
+}
+
+function isRsvpOpen() {
+  return getPublicConfig().rsvpOpen !== false;
+}
+
 function getPublicConfig() {
   const sheet = getConfigSheet();
   const lastRow = sheet.getLastRow();
   const config = {
+    rsvpOpen: true,
     publishVenue: false,
     venueAnnounced: false,
     venueName: "",
@@ -300,6 +336,7 @@ function getPublicConfig() {
     if (!Object.prototype.hasOwnProperty.call(config, key)) return;
     config[key] = key === "venueAnnounced"
       || key === "publishVenue"
+      || key === "rsvpOpen"
       ? String(value).toLowerCase() === "true"
       : value;
   });

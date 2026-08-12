@@ -32,7 +32,7 @@ async function login(){
 }
 async function load(first=false){
   try{
-    const r=await fetch(`${API_URL}?action=dashboard&key=${encodeURIComponent(key)}`);
+    const r=await fetch(`${API_URL}?action=dashboard&key=${encodeURIComponent(key)}&_=${Date.now()}`,{cache:"no-store"});
     const j=await r.json();
     if(!j.success||!j.summary||!Array.isArray(j.rows)) throw Error(j.message||"Unable to load dashboard.");
     data=j; $("loginView").hidden=true; $("dashboardView").hidden=false;
@@ -49,10 +49,28 @@ function tab(name){
 }
 function eventStatus(){
   const s=data.summary,c=data.config||{},last=data.rows[data.rows.length-1],published=c.publishVenue??c.venueAnnounced;
-  $("eventStatusRows").innerHTML=`<div class="event-status-row"><span>RSVP status</span><strong><i class="status-dot open"></i>Open</strong></div>
+  const rsvpOpen=c.rsvpOpen!==false;
+  $("eventStatusRows").innerHTML=`<div class="event-status-row rsvp-status-control"><span>RSVP status</span><div class="rsvp-status-action"><strong><i class="status-dot ${rsvpOpen?"open":"closed"}"></i>${rsvpOpen?"Open":"Closed"}</strong><button id="rsvpToggleBtn" class="${rsvpOpen?"secondary-button":"primary-button"} rsvp-toggle-button" type="button">${rsvpOpen?"Close RSVPs":"Reopen RSVPs"}</button></div></div>
   <div class="event-status-row"><span>Venue</span><strong>${published?"Published":"Pending"}</strong></div>
   <div class="event-status-row"><span>Venue Messages</span><strong>Sent ${s.announcementSent||0} of ${s.acceptedFamilies}</strong></div>
   <div class="event-status-row"><span>Last RSVP</span><strong>${last?esc(last.lastUpdated):"No RSVP responses"}</strong></div>`;
+  $("rsvpToggleBtn").onclick=()=>toggleRsvpOpen(!rsvpOpen);
+}
+async function toggleRsvpOpen(nextOpen){
+  if(!nextOpen&&!confirm("Close RSVPs?\n\nNew RSVP submissions will be disabled until you reopen them."))return;
+  const button=$("rsvpToggleBtn"),previous=data.config?.rsvpOpen!==false;
+  if(button){button.disabled=true;button.textContent=nextOpen?"Reopening...":"Closing..."}
+  try{
+    const r=await post({mode:"setRsvpOpen",adminKey:key,rsvpOpen:nextOpen});
+    if(!r.success)throw Error(r.message||"Unable to update RSVP status.");
+    data.config=r.config||{...(data.config||{}),rsvpOpen:nextOpen};
+    eventStatus();
+    toast(nextOpen?"RSVPs reopened.":"RSVPs closed.");
+  }catch(e){
+    data.config={...(data.config||{}),rsvpOpen:previous};
+    eventStatus();
+    toast(e.message||"Unable to update RSVP status.",true);
+  }
 }
 function summary(){
   const s=data.summary,items=[["Total Attending",s.totalGuests,1],["Accepted RSVPs",s.acceptedFamilies],["Declined RSVPs",s.declinedFamilies],["Adults",s.adults],["Children",s.children],["RSVP Responses",s.totalResponses]];

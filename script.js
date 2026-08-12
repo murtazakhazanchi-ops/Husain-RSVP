@@ -1,7 +1,6 @@
 "use strict";
 
 const SUBMISSION_URL = "https://script.google.com/macros/s/AKfycbwo6kNofaeRAnITieVxDRccMurllRKSFmO-cElHxIYI3ytJJn3MfjKCOvtqdtva93_q/exec";
-const RSVP_CLOSE_AT = new Date("2026-08-09T00:00:00+05:30");
 
 const form = document.getElementById("rsvpForm");
 const invitation = document.querySelector(".invitation");
@@ -23,6 +22,7 @@ const venueAddress = document.getElementById("venueAddress");
 const venueCoordinatesText = document.getElementById("venueCoordinatesText");
 const venueMapLink = document.getElementById("venueMapLink");
 const closedCard = document.getElementById("closedCard");
+let rsvpOpen = true;
 
 const childAgeSelects = [
   document.getElementById("childAge1"),
@@ -211,11 +211,14 @@ function setFormAvailability(enabled) {
   });
 }
 
-function applyRsvpClosing() {
-  if (new Date() < RSVP_CLOSE_AT) return;
+function applyRsvpAvailability(open) {
+  rsvpOpen = open !== false;
+  setFormAvailability(rsvpOpen);
+  closedCard.hidden = rsvpOpen;
 
-  setFormAvailability(false);
-  closedCard.hidden = false;
+  if (!rsvpOpen) {
+    submitButton.classList.remove("is-busy");
+  }
 }
 
 function toNumber(value) {
@@ -256,13 +259,23 @@ function setVenueDate(value) {
 
 async function loadPublicConfig() {
   try {
-    const response = await fetch(`${SUBMISSION_URL}?action=config`);
-    if (!response.ok) return;
+    const response = await fetch(`${SUBMISSION_URL}?action=config&_=${Date.now()}`, {
+      cache: "no-store"
+    });
+    if (!response.ok) {
+      applyRsvpAvailability(true);
+      return;
+    }
 
     const result = await response.json();
-    if (!result.success || !result.config) return;
+    if (!result.success || !result.config) {
+      applyRsvpAvailability(true);
+      return;
+    }
 
     const config = result.config;
+    applyRsvpAvailability(config.rsvpOpen !== false);
+
     const venueAnnounced = config.venueAnnounced ?? config.publishVenue;
     if (!venueAnnounced) {
       venueCard.hidden = true;
@@ -306,6 +319,7 @@ async function loadPublicConfig() {
     venueCard.classList.add("is-visible");
   } catch (error) {
     console.warn("Venue configuration could not be loaded.", error);
+    applyRsvpAvailability(true);
   }
 }
 
@@ -314,11 +328,22 @@ form.addEventListener("submit", async (event) => {
   setStatus("");
 
   try {
+    if (!rsvpOpen) {
+      applyRsvpAvailability(false);
+      return;
+    }
+
     const data = collectData();
     validate(data);
 
     setSubmitting(true);
     const result = await sendRSVP(data);
+
+    if (result.closed) {
+      applyRsvpAvailability(false);
+      setStatus(result.message || "", "error");
+      return;
+    }
 
     if (!result.success) {
       throw new Error(result.message || "The RSVP could not be submitted.");
@@ -331,7 +356,11 @@ form.addEventListener("submit", async (event) => {
     );
   } catch (error) {
     console.error(error);
-    submitButton.disabled = false;
+    if (rsvpOpen) {
+      submitButton.disabled = false;
+    } else {
+      applyRsvpAvailability(false);
+    }
     submitButton.classList.remove("is-busy");
     setStatus(
       error.message || "Something went wrong. Please try again.",
@@ -341,5 +370,5 @@ form.addEventListener("submit", async (event) => {
 });
 
 updateChildAgeFields();
-applyRsvpClosing();
+setFormAvailability(false);
 loadPublicConfig();
