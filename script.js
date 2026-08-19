@@ -288,7 +288,7 @@ async function loadPublicConfig() {
 
     venueName.textContent = config.venueName || "Venue announced";
     setVenueDate(config.venueDate || config.date);
-    venueTime.textContent = config.venueTime || config.time || "7:30 PM";
+    venueTime.textContent = config.venueTime || config.time || "12:00 PM";
     venueAddress.textContent = config.venueAddress || "";
 
     if (latitude !== null && longitude !== null) {
