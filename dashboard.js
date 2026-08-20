@@ -1,12 +1,15 @@
 "use strict";
 const API_URL="https://script.google.com/macros/s/AKfycbwo6kNofaeRAnITieVxDRccMurllRKSFmO-cElHxIYI3ytJJn3MfjKCOvtqdtva93_q/exec",KEY="212-34";
-let key="",data=null,filtered=[],editing=null,charts={},dashboardLoaded=false;
+let key="",data=null,filtered=[],filteredInvitations=[],editing=null,editingInvitation=null,charts={},dashboardLoaded=false;
 const $=id=>document.getElementById(id);
 
 document.addEventListener("DOMContentLoaded",()=>{
   bind(); $("adminKeyInput").value=KEY;
   for(let i=1;i<=10;i++) $("editAdults").add(new Option(i,i));
   for(let i=0;i<=4;i++) $("editChildren").add(new Option(i,i));
+  for(let i=0;i<=10;i++) $("inviteAdultsInput").add(new Option(i,i));
+  for(let i=0;i<=4;i++) $("inviteChildrenInput").add(new Option(i,i));
+  inviteTotal();
 });
 
 function bind(){
@@ -17,6 +20,10 @@ function bind(){
   document.querySelectorAll("[data-open-tab]").forEach(b=>b.onclick=()=>tab(b.dataset.openTab));
   $("searchInput").oninput=filterGuests; $("guestFilter").onchange=filterGuests;
   $("csvBtn").onclick=csv; $("excelBtn").onclick=excel; $("pdfBtn").onclick=()=>print();
+  $("addInvitationBtn").onclick=()=>openInvitationDialog();
+  $("invitationFilter").onchange=filterGuests;
+  $("inviteAdultsInput").onchange=inviteTotal; $("inviteChildrenInput").onchange=inviteTotal;
+  $("saveInvitationBtn").onclick=saveInvitation;
   ["venueNameInput","venueAddressInput","mapsUrlInput","latitudeInput","longitudeInput","venueNotesInput","publicRsvpUrlInput"].forEach(id=>$(id).oninput=venuePreview);
   $("venueAnnounced").onchange=venuePreview; $("saveVenueBtn").onclick=saveVenue;
   $("generateQrBtn").onclick=qr; $("copyRsvpLinkBtn").onclick=copyLink; $("shareInvitationBtn").onclick=shareLink;
@@ -73,7 +80,7 @@ async function toggleRsvpOpen(nextOpen){
   }
 }
 function summary(){
-  const s=data.summary,items=[["Total Attending",s.totalGuests,1],["Accepted RSVPs",s.acceptedFamilies],["Declined RSVPs",s.declinedFamilies],["Adults",s.adults],["Children",s.children],["RSVP Responses",s.totalResponses]];
+  const s=data.summary,items=[["Total Attending",s.totalGuests,1],["Accepted RSVPs",s.acceptedFamilies],["Declined RSVPs",s.declinedFamilies],["Adults",s.adults],["Children",s.children],["RSVP Responses",s.totalResponses],["Invitations Sent",s.invitationsSent||0],["People Invited",s.peopleInvited||0],["Awaiting RSVP",s.awaitingInvitations||0],["People Awaiting Confirmation",s.peopleAwaitingConfirmation||0]];
   $("summaryCards").innerHTML=items.map(x=>`<article class="summary-card ${x[2]?"primary":""}"><span>${x[0]}</span><strong>${x[1]}</strong></article>`).join("");
 }
 function plural(n,singular,pluralText=`${singular}s`){return Number(n)===1?singular:pluralText}
@@ -108,6 +115,7 @@ function filterGuests(){
   const q=$("searchInput").value.trim().toLowerCase(),f=$("guestFilter").value;
   filtered=data.rows.filter(r=>{const s=`${r.guestName} ${r.mobileNumber} ${r.rsvpId}`.toLowerCase();return(!q||s.includes(q))&&(f==="all"||f==="accepted"&&r.attending==="Yes"||f==="declined"&&r.attending==="No"||f==="withChildren"&&r.attending==="Yes"&&r.children>0||f==="withoutChildren"&&r.attending==="Yes"&&r.children===0||f==="updated"&&String(r.action).toLowerCase().includes("updated"))});
   guests();
+  invitations();
 }
 function guests(){
   const call=`<svg viewBox="0 0 24 24"><path d="M6.6 3h3l1.5 4.5-2 1.5c1.4 3.2 3.7 5.5 6.9 6.9l1.5-2L22 15.4v3c0 1.4-1.1 2.6-2.5 2.6C10.4 21 3 13.6 3 4.5 3 3.7 3.7 3 4.5 3h2.1Z" fill="none" stroke="currentColor" stroke-width="2"/></svg>`;
@@ -118,6 +126,41 @@ function guests(){
   document.querySelectorAll(".call").forEach(b=>b.onclick=()=>location.href=`tel:${b.dataset.mobile}`);
   document.querySelectorAll(".edit").forEach(b=>b.onclick=()=>openEdit(b.dataset.id));
   document.querySelectorAll(".msg").forEach(b=>b.onclick=()=>{const r=data.rows.find(x=>x.rsvpId===b.dataset.id);if(r)openGuestWhatsApp(r)});
+}
+function invitationPeople(adults,children){const parts=[];if(adults)parts.push(`${adults} ${plural(adults,"Adult")}`);if(children)parts.push(`${children} ${plural(children,"Child","Children")}`);return parts.join(" · ")||"0 people"}
+function invitationUrl(inv){const u=publicUrl(),t=inv.inviteToken||inv.token;if(!u||!t)return"";return`${u}${u.includes("?")?"&":"?"}invite=${encodeURIComponent(t)}`}
+function requireInvitationUrl(inv){const u=invitationUrl(inv);if(u)return u;tab("venue");toast("Add the Public RSVP Webpage URL before sharing invitation links.",true);return""}
+function invitations(){
+  const q=$("searchInput").value.trim().toLowerCase(),f=$("invitationFilter").value,items=data.invitations||[];
+  filteredInvitations=items.filter(inv=>{const s=`${inv.guestName} ${inv.mobileNumber} ${inv.inviteToken||inv.token} ${inv.rsvpId}`.toLowerCase();return(!q||s.includes(q))&&(f==="all"||inv.status===f)});
+  const copy=`<svg viewBox="0 0 24 24"><rect x="8" y="8" width="11" height="11" rx="2" fill="none" stroke="currentColor" stroke-width="2"/><path d="M5 15H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h8a2 2 0 0 1 2 2v1" fill="none" stroke="currentColor" stroke-width="2"/></svg>`;
+  const wa=`<svg viewBox="0 0 24 24"><path d="M20.5 11.7a8.5 8.5 0 0 1-12.4 7.5L3 20.5l1.4-5a8.5 8.5 0 1 1 16.1-3.8Z" fill="none" stroke="currentColor" stroke-width="2"/><path d="M8.5 7.5c.4-.5.8-.5 1.2-.1l1.2 2c.2.4.1.7-.2 1l-.7.7c1.1 2.1 2.8 3.6 4.9 4.4l.7-.9c.3-.4.7-.5 1.1-.3l2 1c.5.2.6.6.4 1.1-.4 1.1-1.7 2-2.9 2-4.5 0-9.6-4.5-9.6-9 0-.8.8-1.6 1.9-1.9Z" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linejoin="round"/></svg>`;
+  const edit=`<svg viewBox="0 0 24 24"><path d="m4 20 4.5-1 10-10-3.5-3.5-10 10L4 20Z" fill="none" stroke="currentColor" stroke-width="2"/></svg>`;
+  $("invitationList").innerHTML=filteredInvitations.map(inv=>`<article class="invitation-card"><div class="invitation-card-header"><div><h3>${esc(inv.guestName)}</h3><p class="guest-meta"><strong>Mobile</strong> ${inv.mobileNumber?esc(inv.mobileNumber):"Not provided"}</p></div><span class="badge ${inv.status==="Accepted"?"accepted":inv.status==="Declined"?"declined":"pending"}">${esc(inv.status)}</span></div><div class="invitation-details"><div><span>Invited</span><strong>${esc(invitationPeople(inv.adultsInvited,inv.childrenInvited))}</strong></div><div><span>Attending</span><strong>${inv.status==="Awaiting RSVP"?"—":esc(invitationPeople(inv.adultsAttending,inv.childrenAttending))}</strong></div><div><span>Total Invited</span><strong>${inv.totalPeopleInvited} ${plural(inv.totalPeopleInvited,"person","people")}</strong></div><div><span>Updated</span><strong>${shortTime(inv.lastUpdated)}</strong></div></div><p class="guest-meta invite-link-meta"><strong>Invitation ID</strong> ${esc(inv.inviteToken||inv.token)}</p><div class="card-actions"><button class="secondary-button icon-text-button copy-invite" data-token="${esc(inv.inviteToken||inv.token)}"><span class="svg-icon">${copy}</span>Copy Invitation Link</button><button class="whatsapp-button icon-text-button share-invite" data-token="${esc(inv.inviteToken||inv.token)}"><span class="svg-icon">${wa}</span>Share on WhatsApp</button><button class="secondary-button icon-text-button edit-invite" data-token="${esc(inv.inviteToken||inv.token)}"><span class="svg-icon">${edit}</span>Edit Invitation</button></div></article>`).join("");
+  $("emptyInvitations").hidden=filteredInvitations.length!==0;
+  document.querySelectorAll(".copy-invite").forEach(b=>b.onclick=()=>copyInvitationLink(invitationByToken(b.dataset.token)));
+  document.querySelectorAll(".share-invite").forEach(b=>b.onclick=()=>shareInvitation(invitationByToken(b.dataset.token)));
+  document.querySelectorAll(".edit-invite").forEach(b=>b.onclick=()=>openInvitationDialog(invitationByToken(b.dataset.token)));
+}
+function invitationByToken(token){return(data.invitations||[]).find(inv=>(inv.inviteToken||inv.token)===token)}
+async function copyInvitationLink(inv){if(!inv)return;const u=requireInvitationUrl(inv);if(!u)return;try{await navigator.clipboard.writeText(u);toast("Invitation link copied.")}catch{toast("Could not copy invitation link.",true)}}
+function shareInvitation(inv){if(!inv)return;const u=requireInvitationUrl(inv);if(!u)return;const text=`Dear ${inv.guestName},\n\nYou are invited to Captain Husain’s first birthday celebration.\n\nYour invitation is for:\n${invitationPeople(inv.adultsInvited,inv.childrenInvited).toLowerCase()}\n\nPlease confirm your attendance using your personal RSVP link:\n\n${u}`;window.open(`https://wa.me/${inv.mobileNumber?phone(inv.mobileNumber):""}?text=${encodeURIComponent(text)}`,"_blank","noopener")}
+function inviteTotal(){$("inviteTotalOutput").textContent=Number($("inviteAdultsInput").value||0)+Number($("inviteChildrenInput").value||0)}
+function openInvitationDialog(inv=null){editingInvitation=inv;$("invitationDialogTitle").textContent=inv?"Edit Invitation":"Add Invitation";$("saveInvitationBtn").textContent=inv?"Save Invitation":"Create Invitation";$("invitationTokenInput").value=inv?.inviteToken||inv?.token||"";$("inviteNameInput").value=inv?.guestName||"";$("inviteMobileInput").value=inv?.mobileNumber||"";$("inviteAdultsInput").value=String(inv?.adultsInvited??2);$("inviteChildrenInput").value=String(inv?.childrenInvited??0);$("invitationError").textContent="";inviteTotal();$("invitationDialog").showModal()}
+async function saveInvitation(){
+  const payload={guestName:$("inviteNameInput").value.trim(),mobileNumber:$("inviteMobileInput").value.trim(),adultsInvited:Number($("inviteAdultsInput").value||0),childrenInvited:Number($("inviteChildrenInput").value||0)};
+  if(editingInvitation)payload.inviteToken=$("invitationTokenInput").value;
+  $("invitationError").textContent="";
+  if(!payload.guestName){$("invitationError").textContent="Guest Name is required.";return}
+  if(payload.adultsInvited+payload.childrenInvited<1){$("invitationError").textContent="At least one person must be invited.";return}
+  try{
+    const r=await post({mode:editingInvitation?"updateInvitation":"createInvitation",adminKey:key,invitation:payload});
+    if(!r.success)throw Error(r.message||"Unable to save invitation.");
+    $("invitationDialog").close();
+    await load();
+    tab("guests");
+    toast(editingInvitation?"Invitation updated.":"Invitation created.");
+  }catch(e){$("invitationError").textContent=e.message}
 }
 function venueForm(){
   const c=data.config||{};$("venueAnnounced").checked=!!(c.publishVenue??c.venueAnnounced);$("venueNameInput").value=c.venueName||"";$("venueAddressInput").value=c.venueAddress||"";$("mapsUrlInput").value=c.mapsUrl||"";$("latitudeInput").value=c.latitude||"";$("longitudeInput").value=c.longitude||"";$("venueNotesInput").value=c.venueNotes||"";$("publicRsvpUrlInput").value=c.publicRsvpUrl||"";venuePreview();

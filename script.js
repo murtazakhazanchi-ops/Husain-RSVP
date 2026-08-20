@@ -22,7 +22,11 @@ const venueAddress = document.getElementById("venueAddress");
 const venueCoordinatesText = document.getElementById("venueCoordinatesText");
 const venueMapLink = document.getElementById("venueMapLink");
 const closedCard = document.getElementById("closedCard");
+const inviteToken = new URLSearchParams(window.location.search).get("invite") || "";
+const invitationMode = Boolean(inviteToken);
 let rsvpOpen = true;
+let invitationVerified = !invitationMode;
+let personalizedInvitation = null;
 
 const childAgeSelects = [
   document.getElementById("childAge1"),
@@ -60,10 +64,13 @@ function populateAgeDropdown(select) {
 childAgeSelects.forEach(populateAgeDropdown);
 
 function updateChildAgeFields() {
-  const count = Number(childCount.value || 0);
+  const maxChildren = personalizedInvitation
+    ? Math.min(personalizedInvitation.childrenInvited, childAgeSelects.length)
+    : childAgeSelects.length;
+  const count = Math.min(Number(childCount.value || 0), maxChildren);
 
   childAgeSelects.forEach((select, index) => {
-    const active = index < count;
+    const active = index < count && index < maxChildren;
     select.disabled = !active;
     select.required = active;
     select.classList.toggle("is-hidden", !active);
@@ -91,6 +98,13 @@ function updateAttendanceState() {
   if (isDeclining) {
     adultCount.value = "";
     childCount.value = "";
+  } else if (personalizedInvitation) {
+    if (!adultCount.value) {
+      adultCount.value = String(personalizedInvitation.adultsInvited);
+    }
+    if (!childCount.value) {
+      childCount.value = String(personalizedInvitation.childrenInvited);
+    }
   }
 
   updateChildAgeFields();
@@ -116,11 +130,16 @@ function collectData() {
     childCount: children,
     childAges: childAgeSelects
       .slice(0, children)
-      .map((select) => select.value)
+      .map((select) => select.value),
+    inviteToken: invitationVerified ? inviteToken : ""
   };
 }
 
 function validate(data) {
+  if (invitationMode && !invitationVerified) {
+    throw new Error("This invitation link could not be verified. Please contact the host for assistance.");
+  }
+
   if (!data.guestName) {
     throw new Error("Please enter the guest name.");
   }
@@ -134,7 +153,17 @@ function validate(data) {
     throw new Error("Please select whether you will be attending.");
   }
 
-  if (data.attending === "Yes" && !data.adultCount) {
+  if (data.attending === "Yes" && personalizedInvitation) {
+    if (data.adultCount > personalizedInvitation.adultsInvited) {
+      throw new Error("Adult count exceeds this invitation.");
+    }
+    if (data.childCount > personalizedInvitation.childrenInvited) {
+      throw new Error("Child count exceeds this invitation.");
+    }
+    if (data.adultCount + data.childCount < 1) {
+      throw new Error("Please select at least one attendee.");
+    }
+  } else if (data.attending === "Yes" && !data.adultCount) {
     throw new Error("Please select the number of adults.");
   }
 
@@ -213,12 +242,103 @@ function setFormAvailability(enabled) {
 
 function applyRsvpAvailability(open) {
   rsvpOpen = open !== false;
-  setFormAvailability(rsvpOpen);
+  setFormAvailability(rsvpOpen && (!invitationMode || invitationVerified));
   closedCard.hidden = rsvpOpen;
 
   if (!rsvpOpen) {
     submitButton.classList.remove("is-busy");
   }
+}
+
+function setCountOptions(select, min, max, selectedValue) {
+  select.replaceChildren();
+
+  for (let value = min; value <= max; value += 1) {
+    select.appendChild(new Option(String(value), String(value)));
+  }
+
+  select.value = String(Math.min(Math.max(Number(selectedValue || 0), min), max));
+}
+
+function setInvitationError(message) {
+  invitationVerified = false;
+  personalizedInvitation = null;
+  setFormAvailability(false);
+  setStatus(message || "This invitation link could not be verified. Please contact the host for assistance.", "error");
+}
+
+async function loadPersonalInvitation() {
+  const normalizedToken = inviteToken.trim();
+
+  if (!/^[A-Za-z0-9]{24,40}$/.test(normalizedToken)) {
+    setInvitationError();
+    return;
+  }
+
+  try {
+    const response = await fetch(`${SUBMISSION_URL}?action=invitation&invite=${encodeURIComponent(normalizedToken)}&_=${Date.now()}`, {
+      cache: "no-store"
+    });
+
+    if (!response.ok) {
+      setInvitationError();
+      return;
+    }
+
+    const result = await response.json();
+    if (!result.success || !result.invitation) {
+      setInvitationError(result.message);
+      return;
+    }
+
+    applyPersonalInvitation(result.invitation);
+  } catch (error) {
+    console.warn("Personalized invitation could not be loaded.", error);
+    setInvitationError();
+  }
+}
+
+function applyPersonalInvitation(invitationData) {
+  personalizedInvitation = {
+    ...invitationData,
+    adultsInvited: Number(invitationData.adultsInvited || 0),
+    childrenInvited: Number(invitationData.childrenInvited || 0),
+    adultsAttending: Number(invitationData.adultsAttending || 0),
+    childrenAttending: Number(invitationData.childrenAttending || 0)
+  };
+  invitationVerified = true;
+
+  guestName.value = personalizedInvitation.guestName || "";
+  mobileNumber.value = personalizedInvitation.mobileNumber || "";
+
+  const hasAccepted = personalizedInvitation.attending === "Yes";
+  const hasDeclined = personalizedInvitation.attending === "No";
+  const initialAdults = hasAccepted
+    ? personalizedInvitation.adultsAttending
+    : personalizedInvitation.adultsInvited;
+  const initialChildren = hasAccepted
+    ? personalizedInvitation.childrenAttending
+    : personalizedInvitation.childrenInvited;
+
+  setCountOptions(adultCount, 0, personalizedInvitation.adultsInvited, initialAdults);
+  setCountOptions(childCount, 0, personalizedInvitation.childrenInvited, initialChildren);
+
+  document.querySelectorAll('input[name="attending"]').forEach((radio) => {
+    radio.checked = (hasAccepted && radio.value === "Yes")
+      || (hasDeclined && radio.value === "No");
+  });
+
+  updateAttendanceState();
+
+  if (hasAccepted && Array.isArray(personalizedInvitation.childAges)) {
+    childAgeSelects.forEach((select, index) => {
+      if (index < personalizedInvitation.childAges.length) {
+        select.value = personalizedInvitation.childAges[index] || "";
+      }
+    });
+  }
+
+  applyRsvpAvailability(rsvpOpen);
 }
 
 function toNumber(value) {
@@ -369,6 +489,16 @@ form.addEventListener("submit", async (event) => {
   }
 });
 
-updateChildAgeFields();
-setFormAvailability(false);
-loadPublicConfig();
+async function initializePage() {
+  updateChildAgeFields();
+  setFormAvailability(false);
+  await loadPublicConfig();
+
+  if (invitationMode) {
+    await loadPersonalInvitation();
+  } else {
+    applyRsvpAvailability(rsvpOpen);
+  }
+}
+
+initializePage();

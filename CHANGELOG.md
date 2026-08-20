@@ -1,5 +1,37 @@
 # Production Release Changelog
 
+## Personalized Invitation Management
+
+Modified files:
+
+- `AppsScript-Code.gs`
+  - Added a non-destructive `Invitations` sheet with token, allocation, response, status, and timestamp fields.
+  - Added public token lookup for a single invitation without exposing dashboard credentials or the full invitation list.
+  - Added admin create/update invitation operations using the existing dashboard authentication key.
+  - Added server-side personalized RSVP validation so adult and child attendance cannot exceed the stored allocation.
+  - Added invitation response syncing so revisiting a personal RSVP updates the existing RSVP record instead of double-counting.
+  - Added invitation-specific overview statistics while preserving existing RSVP response calculations.
+
+- `script.js`
+  - Added `?invite=<TOKEN>` personalized mode for the existing RSVP artwork form.
+  - Prefills guest name, mobile number, adults, children, existing attendance, and child ages when a token is verified.
+  - Restricts adult and child dropdown options to the invitation allocation only in personalized mode.
+  - Keeps invalid personal links disabled with a host-contact message instead of falling back to unrestricted RSVP entry.
+
+- `dashboard.html`
+  - Added Add Invitation controls inside the existing Guests area.
+  - Added an invitation status filter and invitation list container.
+  - Added the invitation create/edit dialog.
+
+- `dashboard.css`
+  - Added responsive styles for invitation cards, invitation dialog totals, and the expanded overview metric grid.
+  - Preserved the existing dashboard visual language, touch targets, and horizontal overflow containment.
+
+- `dashboard.js`
+  - Added dashboard invitation creation, editing, status filtering, link copying, and WhatsApp sharing.
+  - Added personalized invitation URL generation from the saved Public RSVP Webpage URL.
+  - Added invitation allocation statistics to Overview without mixing invited headcount into attendee totals.
+
 ## Captain Husain RSVP Final Release
 
 Modified files:
