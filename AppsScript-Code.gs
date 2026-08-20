@@ -47,7 +47,11 @@ const INVITATION_HEADERS = [
   "Total Attending",
   "RSVP ID",
   "Responded Timestamp",
-  "Last Updated"
+  "Last Updated",
+  "Share Status",
+  "First Shared At",
+  "Last Shared At",
+  "Share Count"
 ];
 
 function doGet(event) {
@@ -133,6 +137,16 @@ function doPost(event) {
       return jsonResponse(updateInvitation(data.invitation || {}));
     }
 
+    if (data.mode === "markInvitationShared") {
+      assertAdminKey(data.adminKey);
+      return jsonResponse(markInvitationShared(data.inviteToken || data.token));
+    }
+
+    if (data.mode === "markInvitationUnshared") {
+      assertAdminKey(data.adminKey);
+      return jsonResponse(markInvitationUnshared(data.inviteToken || data.token));
+    }
+
     if (!isRsvpOpen()) {
       return jsonResponse({
         success: false,
@@ -216,10 +230,10 @@ function getDashboardPayload() {
       withoutChildren: accepted.filter((row) => row.children === 0).length,
       announcementSent,
       announcementPending,
-      invitationsSent: invitationStats.invitationsSent,
-      peopleInvited: invitationStats.peopleInvited,
-      awaitingInvitations: invitationStats.awaitingInvitations,
-      peopleAwaitingConfirmation: invitationStats.peopleAwaitingConfirmation
+      personalInvitesCreated: invitationStats.personalInvitesCreated,
+      invitesShared: invitationStats.invitesShared,
+      awaitingResponse: invitationStats.awaitingResponse,
+      notYetShared: invitationStats.notYetShared
     },
     config: getPublicConfig(),
     rows,
@@ -560,7 +574,11 @@ function createInvitation(invitationData) {
     0,
     "",
     "",
-    now
+    now,
+    "Not Shared",
+    "",
+    "",
+    0
   ]);
 
   return {
@@ -601,6 +619,49 @@ function updateInvitation(invitationData) {
     success: true,
     invitation: findInvitationByToken(token),
     message: "Invitation updated."
+  };
+}
+
+function markInvitationShared(tokenValue) {
+  const token = normalizeInvitationToken(tokenValue);
+  if (!token) throw new Error("Invitation token is required.");
+
+  const invitation = findInvitationByToken(token);
+  if (!invitation) throw new Error("Invitation was not found.");
+
+  const sheet = getInvitationSheet();
+  const now = new Date();
+  const firstSharedAt = invitation.firstSharedAt || now;
+  const shareCount = Number(invitation.shareCount || 0) + 1;
+
+  sheet.getRange(invitation.rowNumber, 15, 1, 4).setValues([[
+    "Shared",
+    firstSharedAt,
+    now,
+    shareCount
+  ]]);
+
+  return {
+    success: true,
+    invitation: findInvitationByToken(token),
+    message: "Invitation marked shared."
+  };
+}
+
+function markInvitationUnshared(tokenValue) {
+  const token = normalizeInvitationToken(tokenValue);
+  if (!token) throw new Error("Invitation token is required.");
+
+  const invitation = findInvitationByToken(token);
+  if (!invitation) throw new Error("Invitation was not found.");
+
+  const sheet = getInvitationSheet();
+  sheet.getRange(invitation.rowNumber, 15).setValue("Not Shared");
+
+  return {
+    success: true,
+    invitation: findInvitationByToken(token),
+    message: "Invitation marked unshared."
   };
 }
 
@@ -648,12 +709,12 @@ function listInvitations() {
 }
 
 function getInvitationStats(invitations) {
-  const awaiting = invitations.filter((invitation) => invitation.status === "Awaiting RSVP");
+  const shared = invitations.filter((invitation) => invitation.shareStatus === "Shared");
   return {
-    invitationsSent: invitations.length,
-    peopleInvited: invitations.reduce((sum, invitation) => sum + invitation.totalPeopleInvited, 0),
-    awaitingInvitations: awaiting.length,
-    peopleAwaitingConfirmation: awaiting.reduce((sum, invitation) => sum + invitation.totalPeopleInvited, 0)
+    personalInvitesCreated: invitations.length,
+    invitesShared: shared.length,
+    awaitingResponse: shared.filter((invitation) => invitation.status === "Awaiting RSVP").length,
+    notYetShared: invitations.filter((invitation) => invitation.shareStatus !== "Shared").length
   };
 }
 
@@ -696,14 +757,27 @@ function ensureHeaders(sheet) {
 }
 
 function ensureInvitationHeaders(sheet) {
-  const existing = sheet.getRange(1, 1, 1, INVITATION_HEADERS.length).getDisplayValues()[0];
-  const match = INVITATION_HEADERS.every((header, index) => existing[index] === header);
+  const width = Math.max(sheet.getLastColumn(), INVITATION_HEADERS.length, 1);
+  const existing = sheet.getRange(1, 1, 1, width).getDisplayValues()[0];
+  const hasHeaders = existing.some((header) => String(header || "").trim());
 
-  if (!match) {
+  if (!hasHeaders) {
     sheet.getRange(1, 1, 1, INVITATION_HEADERS.length).setValues([INVITATION_HEADERS]);
     sheet.getRange(1, 1, 1, INVITATION_HEADERS.length).setFontWeight("bold");
     sheet.setFrozenRows(1);
+    return;
   }
+
+  INVITATION_HEADERS.forEach((header) => {
+    if (existing.includes(header)) return;
+
+    const nextColumn = sheet.getLastColumn() + 1;
+    sheet.getRange(1, nextColumn).setValue(header);
+    sheet.getRange(1, nextColumn).setFontWeight("bold");
+    existing.push(header);
+  });
+
+  sheet.setFrozenRows(1);
 }
 
 function findExistingMobileRow(sheet, normalizedMobile) {
@@ -803,6 +877,10 @@ function invitationFromRow(row, rowNumber) {
     rsvpId: row[11],
     respondedTimestamp: row[12],
     lastUpdated: row[13],
+    shareStatus: row[14] === "Shared" ? "Shared" : "Not Shared",
+    firstSharedAt: row[15],
+    lastSharedAt: row[16],
+    shareCount: Number(row[17] || 0),
     rowNumber
   };
 }

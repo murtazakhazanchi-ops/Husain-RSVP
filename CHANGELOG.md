@@ -1,5 +1,30 @@
 # Production Release Changelog
 
+## Personalized Invitation Sharing Refinement
+
+Modified files:
+
+- `AppsScript-Code.gs`
+  - Extends the `Invitations` sheet non-destructively with `Share Status`, `First Shared At`, `Last Shared At`, and `Share Count`.
+  - Adds authenticated `markInvitationShared` and `markInvitationUnshared` admin operations.
+  - Defaults existing invitation records to `Not Shared` and keeps historical share timestamps/counts when marking unshared.
+  - Replaces invitation headcount overview values with record-based operational metrics.
+
+- `dashboard.html`
+  - Adds a separate Share Status invitation filter beside the RSVP Status filter.
+
+- `dashboard.css`
+  - Adds subtle sharing badge, shared timestamp, and two-filter invitation header styling.
+
+- `dashboard.js`
+  - Replaces the initial personalized invitation WhatsApp copy with the approved message.
+  - Adds native Web Share support for `husain-invite.jpg` with graceful fallback to WhatsApp text sharing.
+  - Adds invitation share-status badges, Share Invitation, Share Again, and Mark Unshared actions.
+  - Updates Overview to show Personal Invites Created, Invites Shared, Awaiting Response, and Not Yet Shared.
+
+- `husain-invite.jpg`
+  - Adds the approved personalized invitation image for native share workflows.
+
 ## Personalized Invitation Management
 
 Modified files:
