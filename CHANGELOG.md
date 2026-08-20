@@ -1,5 +1,20 @@
 # Production Release Changelog
 
+## Guest Ordering and Repeat Native Invitation Sharing
+
+Modified files:
+
+- `dashboard.js`
+  - Adds reusable timestamp parsing and newest-first sorting helpers.
+  - Sorts standard RSVP cards by `lastUpdated`, then `timestamp`, newest first.
+  - Sorts personalized invitation cards by `lastUpdated`, then `createdTimestamp`, newest first.
+  - Keeps search, RSVP Status, Invitation Share Status, and Venue Message Status filters newest-first after filtering.
+  - Keeps native Share Invitation / Share Again bound to the native Web Share flow on every click.
+  - Limits WhatsApp fallback to native-share attempt failures only, while preserving AbortError cancellation behavior.
+
+- `CHANGELOG.md`
+  - Adds this production fix entry.
+
 ## Invitation Tracking Filters and RSVP Deletion
 
 Modified files:
