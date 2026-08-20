@@ -19,7 +19,7 @@ main{max-width:1180px;margin:0 auto;padding:15px 13px 42px}.login-view{min-heigh
 .guest-toolbar{display:grid;gap:9px}.guest-toolbar label,.form-stack label,.message-controls label{display:grid;gap:5px;font-size:12px;font-weight:700}.export-row{display:flex;gap:7px;flex-wrap:wrap;margin:11px 0}
 .add-invitation-button{align-self:end;display:flex;align-items:center;justify-content:center;gap:7px}.invitation-manager{margin:14px 0;padding-top:14px;border-top:1px solid var(--line)}.invitation-heading{align-items:end;flex-wrap:wrap}.invitation-heading label{display:grid;gap:5px;min-width:min(100%,180px);font-size:12px;font-weight:700}.invitation-list{display:grid;gap:9px}.invitation-card{padding:12px;border:1px solid var(--line);border-radius:13px;background:#FCFDFE}.invitation-card-header{display:flex;justify-content:space-between;gap:10px}.invitation-badges{display:flex;align-items:flex-start;justify-content:flex-end;gap:6px;flex-wrap:wrap}.invitation-card h3{margin:0;font-size:16px}.invitation-details{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:7px;margin-top:10px}.invitation-details div,.invitation-total-row{padding:8px;border-radius:10px;background:#F3F6FA}.invitation-details span,.invitation-total-row span{display:block;color:var(--muted);font-size:10px;font-weight:700}.invitation-details strong,.invitation-total-row strong{display:block;margin-top:2px;font-size:13px;color:var(--text)}.invitation-details small{display:block;margin-top:2px;color:var(--muted);font-size:11px;line-height:1.2}.invitation-total-row{display:flex;align-items:center;justify-content:space-between;margin-top:4px}.invitation-total-row strong{margin:0;font-size:20px;color:var(--navy)}.invite-link-meta{overflow-wrap:anywhere}
 input,select,textarea{width:100%;border:1px solid #B9C4D0;border-radius:10px;background:#fff;color:var(--text);padding:10px 11px;outline:none}input:focus,select:focus,textarea:focus{border-color:var(--blue);box-shadow:0 0 0 3px rgba(63,135,197,.14)}textarea{min-height:78px;resize:vertical}
-.primary-button,.secondary-button,.whatsapp-button{min-height:44px;border-radius:10px;padding:9px 13px;font-weight:800}.primary-button{border:0;background:var(--navy);color:white}.secondary-button{border:1px solid #B7C1CC;background:#fff;color:var(--navy)}.whatsapp-button{border:0;background:var(--green);color:#073B19}
+.primary-button,.secondary-button,.whatsapp-button,.danger-button{min-height:44px;border-radius:10px;padding:9px 13px;font-weight:800}.primary-button{border:0;background:var(--navy);color:white}.secondary-button{border:1px solid #B7C1CC;background:#fff;color:var(--navy)}.whatsapp-button{border:0;background:var(--green);color:#073B19}.danger-button{border:0;background:var(--red);color:white}.delete-dialog-body{margin:0;color:var(--muted);line-height:1.45}
 .switch-row{display:flex;gap:11px;align-items:center;padding:12px;border:1px solid #F1DFC0;border-radius:12px;background:var(--cream);margin-bottom:13px}.switch-row input{width:20px;height:20px}.switch-row strong,.switch-row small{display:block}.switch-row small{margin-top:2px;color:var(--muted)}.form-stack{display:grid;gap:11px}.two-column{display:grid;grid-template-columns:1fr 1fr;gap:9px}
 .venue-preview-card{display:grid;grid-template-columns:34px 1fr;gap:10px;align-items:center;margin:14px 0;padding:13px;border:1px dashed var(--navy);border-radius:13px;background:var(--cream)}.venue-preview-icon{width:27px;height:27px;color:var(--navy)}.venue-preview-card h3{margin:2px 0 3px}.venue-preview-card p{margin:0;color:var(--muted);overflow-wrap:anywhere}.venue-preview-muted{font-size:12px}.venue-preview-card a{display:inline-block;margin-top:4px;color:var(--navy);font-weight:800}
 .venue-actions-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:8px}.action-tile{display:flex;flex-direction:column;align-items:center;justify-content:center;gap:5px;text-align:center}.qr-panel{display:grid;place-items:center;margin-top:12px;padding:13px;border:1px solid var(--line);border-radius:12px;background:#FAFBFC}.qr-panel canvas{max-width:170px;width:100%;height:auto}.sticky-save-bar{position:sticky;bottom:0;padding:10px 0 calc(10px + env(safe-area-inset-bottom));background:linear-gradient(to top,var(--bg) 75%,transparent)}.sticky-save-bar .primary-button{width:100%}
@@ -145,6 +145,7 @@ canvas {
 .primary-button,
 .secondary-button,
 .whatsapp-button,
+.danger-button,
 .action-tile {
   min-width: 0;
   max-width: 100%;
@@ -194,7 +195,7 @@ textarea {
   }
 
   .guest-toolbar {
-    grid-template-columns: minmax(0, 1fr) minmax(0, 220px) minmax(0, auto);
+    grid-template-columns: minmax(0, 1fr) minmax(0, 180px) minmax(0, 190px) minmax(0, auto);
   }
 }
 

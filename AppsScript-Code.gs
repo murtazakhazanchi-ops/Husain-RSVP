@@ -147,6 +147,16 @@ function doPost(event) {
       return jsonResponse(markInvitationUnshared(data.inviteToken || data.token));
     }
 
+    if (data.mode === "deleteRsvp") {
+      assertAdminKey(data.adminKey);
+      return jsonResponse(deleteRsvp(data.rsvpId));
+    }
+
+    if (data.mode === "deleteInvitation") {
+      assertAdminKey(data.adminKey);
+      return jsonResponse(deleteInvitation(data.inviteToken || data.token));
+    }
+
     if (!isRsvpOpen()) {
       return jsonResponse({
         success: false,
@@ -604,16 +614,17 @@ function updateInvitation(invitationData) {
   }
 
   const sheet = getInvitationSheet();
+  const headerMap = getSheetHeaderMap(sheet);
   const now = new Date();
 
-  sheet.getRange(invitation.rowNumber, 3, 1, 5).setValues([[
-    sanitizeCell(values.guestName),
-    sanitizeCell(values.mobileNumber),
-    values.adultsInvited,
-    values.childrenInvited,
-    values.totalPeopleInvited
-  ]]);
-  sheet.getRange(invitation.rowNumber, 14).setValue(now);
+  setRowValuesByHeader(sheet, invitation.rowNumber, headerMap, {
+    "Guest Name": sanitizeCell(values.guestName),
+    "Mobile Number": sanitizeCell(values.mobileNumber),
+    "Adults Invited": values.adultsInvited,
+    "Children Invited": values.childrenInvited,
+    "Total People Invited": values.totalPeopleInvited,
+    "Last Updated": now
+  });
 
   return {
     success: true,
@@ -630,16 +641,17 @@ function markInvitationShared(tokenValue) {
   if (!invitation) throw new Error("Invitation was not found.");
 
   const sheet = getInvitationSheet();
+  const headerMap = getSheetHeaderMap(sheet);
   const now = new Date();
   const firstSharedAt = invitation.firstSharedAt || now;
   const shareCount = Number(invitation.shareCount || 0) + 1;
 
-  sheet.getRange(invitation.rowNumber, 15, 1, 4).setValues([[
-    "Shared",
-    firstSharedAt,
-    now,
-    shareCount
-  ]]);
+  setRowValuesByHeader(sheet, invitation.rowNumber, headerMap, {
+    "Share Status": "Shared",
+    "First Shared At": firstSharedAt,
+    "Last Shared At": now,
+    "Share Count": shareCount
+  });
 
   return {
     success: true,
@@ -656,12 +668,69 @@ function markInvitationUnshared(tokenValue) {
   if (!invitation) throw new Error("Invitation was not found.");
 
   const sheet = getInvitationSheet();
-  sheet.getRange(invitation.rowNumber, 15).setValue("Not Shared");
+  setRowValuesByHeader(sheet, invitation.rowNumber, getSheetHeaderMap(sheet), {
+    "Share Status": "Not Shared"
+  });
 
   return {
     success: true,
     invitation: findInvitationByToken(token),
     message: "Invitation marked unshared."
+  };
+}
+
+function deleteRsvp(rsvpIdValue) {
+  const rsvpId = String(rsvpIdValue || "").trim();
+  if (!rsvpId) throw new Error("RSVP ID is required.");
+
+  const responseSheet = getResponseSheet();
+  ensureHeaders(responseSheet);
+  const responseRow = findRsvpIdRow(responseSheet, rsvpId);
+  if (!responseRow) throw new Error("RSVP record was not found.");
+
+  const responseHeaderMap = getSheetHeaderMap(responseSheet);
+  const inviteTokenColumn = responseHeaderMap["Invitation Token"];
+  const inviteToken = inviteTokenColumn
+    ? String(responseSheet.getRange(responseRow, inviteTokenColumn).getValue() || "").trim()
+    : "";
+  responseSheet.deleteRow(responseRow);
+  deleteAnnouncementStatus(rsvpId);
+
+  if (inviteToken) {
+    const invitation = findInvitationByToken(inviteToken);
+    if (invitation) {
+      getInvitationSheet().deleteRow(invitation.rowNumber);
+    }
+  }
+
+  return {
+    success: true,
+    message: inviteToken ? "RSVP and invitation deleted." : "RSVP deleted."
+  };
+}
+
+function deleteInvitation(tokenValue) {
+  const token = normalizeInvitationToken(tokenValue);
+  if (!token) throw new Error("Invitation token is required.");
+
+  const invitation = findInvitationByToken(token);
+  if (!invitation) throw new Error("Invitation was not found.");
+
+  if (invitation.rsvpId) {
+    const responseSheet = getResponseSheet();
+    ensureHeaders(responseSheet);
+    const responseRow = findRsvpIdRow(responseSheet, invitation.rsvpId);
+    if (responseRow) {
+      responseSheet.deleteRow(responseRow);
+      deleteAnnouncementStatus(invitation.rsvpId);
+    }
+  }
+
+  getInvitationSheet().deleteRow(invitation.rowNumber);
+
+  return {
+    success: true,
+    message: "Invitation deleted."
   };
 }
 
@@ -701,10 +770,11 @@ function listInvitations() {
   const lastRow = sheet.getLastRow();
   if (lastRow < 2) return [];
 
+  const headerMap = getSheetHeaderMap(sheet);
   return sheet
-    .getRange(2, 1, lastRow - 1, INVITATION_HEADERS.length)
+    .getRange(2, 1, lastRow - 1, sheet.getLastColumn())
     .getDisplayValues()
-    .map((row, index) => invitationFromRow(row, index + 2))
+    .map((row, index) => invitationFromRow(row, index + 2, headerMap))
     .filter((invitation) => invitation.token);
 }
 
@@ -780,6 +850,32 @@ function ensureInvitationHeaders(sheet) {
   sheet.setFrozenRows(1);
 }
 
+function getSheetHeaderMap(sheet) {
+  const width = Math.max(sheet.getLastColumn(), 1);
+  const headers = sheet.getRange(1, 1, 1, width).getDisplayValues()[0];
+  const map = {};
+
+  headers.forEach((header, index) => {
+    const name = String(header || "").trim();
+    if (name && !map[name]) map[name] = index + 1;
+  });
+
+  return map;
+}
+
+function requireHeaderColumn(headerMap, header) {
+  const column = headerMap[header];
+  if (!column) throw new Error("Missing required sheet column: " + header);
+  return column;
+}
+
+function setRowValuesByHeader(sheet, rowNumber, headerMap, valuesByHeader) {
+  Object.keys(valuesByHeader).forEach((header) => {
+    const column = requireHeaderColumn(headerMap, header);
+    sheet.getRange(rowNumber, column).setValue(valuesByHeader[header]);
+  });
+}
+
 function findExistingMobileRow(sheet, normalizedMobile) {
   if (!normalizedMobile) return null;
 
@@ -799,7 +895,11 @@ function findInvitationResponseRow(sheet, inviteToken) {
   const lastRow = sheet.getLastRow();
   if (lastRow < 2) return null;
 
-  const values = sheet.getRange(2, 14, lastRow - 1, 1).getDisplayValues();
+  const headerMap = getSheetHeaderMap(sheet);
+  const inviteTokenColumn = headerMap["Invitation Token"];
+  if (!inviteTokenColumn) return null;
+
+  const values = sheet.getRange(2, inviteTokenColumn, lastRow - 1, 1).getDisplayValues();
   for (let index = 0; index < values.length; index += 1) {
     if (String(values[index][0]).trim() === inviteToken) {
       return index + 2;
@@ -812,7 +912,11 @@ function findRsvpIdRow(sheet, rsvpId) {
   const lastRow = sheet.getLastRow();
   if (lastRow < 2) return null;
 
-  const values = sheet.getRange(2, 2, lastRow - 1, 1).getDisplayValues();
+  const headerMap = getSheetHeaderMap(sheet);
+  const rsvpIdColumn = headerMap["RSVP ID"];
+  if (!rsvpIdColumn) return null;
+
+  const values = sheet.getRange(2, rsvpIdColumn, lastRow - 1, 1).getDisplayValues();
   for (let index = 0; index < values.length; index += 1) {
     if (String(values[index][0]).trim() === rsvpId) {
       return index + 2;
@@ -851,61 +955,70 @@ function findInvitationByToken(token) {
   const lastRow = sheet.getLastRow();
   if (lastRow < 2) return null;
 
-  const values = sheet.getRange(2, 1, lastRow - 1, INVITATION_HEADERS.length).getDisplayValues();
+  const headerMap = getSheetHeaderMap(sheet);
+  const tokenColumn = headerMap["Invitation Token"];
+  if (!tokenColumn) return null;
+
+  const values = sheet.getRange(2, 1, lastRow - 1, sheet.getLastColumn()).getDisplayValues();
   for (let index = 0; index < values.length; index += 1) {
-    if (String(values[index][0]).trim() === normalizedToken) {
-      return invitationFromRow(values[index], index + 2);
+    if (String(values[index][tokenColumn - 1]).trim() === normalizedToken) {
+      return invitationFromRow(values[index], index + 2, headerMap);
     }
   }
   return null;
 }
 
-function invitationFromRow(row, rowNumber) {
+function invitationFromRow(row, rowNumber, headerMap) {
+  const value = (header) => {
+    const column = headerMap && headerMap[header];
+    return column ? row[column - 1] : "";
+  };
   return {
-    token: String(row[0] || "").trim(),
-    inviteToken: String(row[0] || "").trim(),
-    createdTimestamp: row[1],
-    guestName: row[2],
-    mobileNumber: row[3],
-    adultsInvited: Number(row[4] || 0),
-    childrenInvited: Number(row[5] || 0),
-    totalPeopleInvited: Number(row[6] || 0),
-    status: row[7] || "Awaiting RSVP",
-    adultsAttending: Number(row[8] || 0),
-    childrenAttending: Number(row[9] || 0),
-    totalAttending: Number(row[10] || 0),
-    rsvpId: row[11],
-    respondedTimestamp: row[12],
-    lastUpdated: row[13],
-    shareStatus: row[14] === "Shared" ? "Shared" : "Not Shared",
-    firstSharedAt: row[15],
-    lastSharedAt: row[16],
-    shareCount: Number(row[17] || 0),
+    token: String(value("Invitation Token") || "").trim(),
+    inviteToken: String(value("Invitation Token") || "").trim(),
+    createdTimestamp: value("Created Timestamp"),
+    guestName: value("Guest Name"),
+    mobileNumber: value("Mobile Number"),
+    adultsInvited: Number(value("Adults Invited") || 0),
+    childrenInvited: Number(value("Children Invited") || 0),
+    totalPeopleInvited: Number(value("Total People Invited") || 0),
+    status: value("Status") || "Awaiting RSVP",
+    adultsAttending: Number(value("Adults Attending") || 0),
+    childrenAttending: Number(value("Children Attending") || 0),
+    totalAttending: Number(value("Total Attending") || 0),
+    rsvpId: value("RSVP ID"),
+    respondedTimestamp: value("Responded Timestamp"),
+    lastUpdated: value("Last Updated"),
+    shareStatus: value("Share Status") === "Shared" ? "Shared" : "Not Shared",
+    firstSharedAt: value("First Shared At"),
+    lastSharedAt: value("Last Shared At"),
+    shareCount: Number(value("Share Count") || 0),
     rowNumber
   };
 }
 
 function updateInvitationResponse(invitation, data, rsvpId, now) {
   const sheet = getInvitationSheet();
+  const headerMap = getSheetHeaderMap(sheet);
   const status = data.attending === "Yes" ? "Accepted" : "Declined";
   const adultsAttending = data.attending === "Yes" ? Number(data.adultCount) : 0;
   const childrenAttending = data.attending === "Yes" ? Number(data.childCount) : 0;
   const respondedTimestamp = invitation.respondedTimestamp || now;
 
-  sheet.getRange(invitation.rowNumber, 3, 1, 12).setValues([[
-    sanitizeCell(data.guestName),
-    sanitizeCell(data.mobileNumber),
-    invitation.adultsInvited,
-    invitation.childrenInvited,
-    invitation.totalPeopleInvited,
-    status,
-    adultsAttending,
-    childrenAttending,
-    adultsAttending + childrenAttending,
-    rsvpId,
-    respondedTimestamp,
-    now
-  ]]);
+  setRowValuesByHeader(sheet, invitation.rowNumber, headerMap, {
+    "Guest Name": sanitizeCell(data.guestName),
+    "Mobile Number": sanitizeCell(data.mobileNumber),
+    "Adults Invited": invitation.adultsInvited,
+    "Children Invited": invitation.childrenInvited,
+    "Total People Invited": invitation.totalPeopleInvited,
+    "Status": status,
+    "Adults Attending": adultsAttending,
+    "Children Attending": childrenAttending,
+    "Total Attending": adultsAttending + childrenAttending,
+    "RSVP ID": rsvpId,
+    "Responded Timestamp": respondedTimestamp,
+    "Last Updated": now
+  });
 }
 
 function validateSubmission(data, invitation) {
@@ -1062,6 +1175,22 @@ function resetAnnouncementStatuses() {
     success: true,
     message: "Announcement statuses reset."
   };
+}
+
+function deleteAnnouncementStatus(rsvpId) {
+  const normalizedId = String(rsvpId || "").trim();
+  if (!normalizedId) return;
+
+  const sheet = getAnnouncementSheet();
+  const lastRow = sheet.getLastRow();
+  if (lastRow < 2) return;
+
+  const ids = sheet.getRange(2, 1, lastRow - 1, 1).getDisplayValues();
+  for (let index = ids.length - 1; index >= 0; index -= 1) {
+    if (String(ids[index][0]).trim() === normalizedId) {
+      sheet.deleteRow(index + 2);
+    }
+  }
 }
 
 function normalizeMobileNumber(value) {

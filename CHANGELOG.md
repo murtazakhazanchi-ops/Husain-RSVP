@@ -1,5 +1,32 @@
 # Production Release Changelog
 
+## Invitation Tracking Filters and RSVP Deletion
+
+Modified files:
+
+- `AppsScript-Code.gs`
+  - Adds authenticated `deleteRsvp` and `deleteInvitation` operations using stable RSVP IDs and invitation tokens.
+  - Deletes linked venue message status rows when an RSVP is permanently removed.
+  - Deletes both the RSVP response and personalized invitation for responded invitation records.
+  - Uses invitation header-name mapping for share fields, invitation reads, invitation updates, and response sync.
+
+- `dashboard.html`
+  - Adds the Venue Message Status filter to the Guests toolbar.
+  - Adds the reusable destructive confirmation dialog for RSVP and invitation deletion.
+
+- `dashboard.css`
+  - Adds production styling for destructive buttons and delete-dialog body copy.
+  - Adjusts the desktop Guests toolbar to fit the added Venue Message Status filter without overflow.
+
+- `dashboard.js`
+  - Builds native share and direct WhatsApp invitation text from one complete message with the RSVP URL under `RSVP here:`.
+  - Removes the separate Web Share `url` field so supported platforms do not reposition the link.
+  - Marks direct WhatsApp invitations as shared before opening WhatsApp, and marks native shares only after successful share completion.
+  - Recomputes Overview invitation metrics from the loaded `invitations` array after load, share, unshare, sync, edit, and delete flows.
+  - Adds RSVP Share Status and Venue Message Status filtering behavior across invitation cards and accepted RSVP rows.
+  - Adds Venue Message actions to accepted personalized invitations using the latest linked RSVP row.
+  - Adds modal-backed permanent deletion for standard RSVPs, personalized RSVPs, and pending personalized invitations.
+
 ## Personalized Invitation Sharing Refinement
 
 Modified files:
