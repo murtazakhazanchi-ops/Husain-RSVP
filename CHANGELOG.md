@@ -1,5 +1,19 @@
 # Production Release Changelog
 
+## Dashboard API Parsing and Cache Refresh
+
+Modified files:
+
+- `dashboard.html`
+  - Adds a release query string to `dashboard.js` so GitHub Pages browsers fetch the current dashboard code.
+
+- `dashboard.js`
+  - Adds one reusable dashboard JSON response parser for all GET and POST API calls.
+  - Uses the clean Apps Script dashboard route with only `action=dashboard` and the host key.
+  - Logs unexpected HTML/malformed responses to the console with a short preview while keeping raw HTML out of the UI.
+  - Shows a clean login error when the dashboard service cannot be reached or returns an unexpected page.
+  - Keeps the existing Apps Script URL, host key, dashboard logic, RSVP logic, invitation tracking, delete actions, filters, and venue messaging unchanged.
+
 ## Guest Ordering and Repeat Native Invitation Sharing
 
 Modified files:

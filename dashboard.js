@@ -41,13 +41,13 @@ async function login(){
 }
 async function load(first=false){
   try{
-    const r=await fetch(`${API_URL}?action=dashboard&key=${encodeURIComponent(key)}&_=${Date.now()}`,{cache:"no-store"});
-    const j=await r.json();
+    const r=await dashboardFetch(`${API_URL}?action=dashboard&key=${encodeURIComponent(key)}`,{cache:"no-store"});
+    const j=await readJsonResponse(r);
     if(!j.success||!j.summary||!Array.isArray(j.rows)) throw Error(j.message||"Unable to load dashboard.");
     data=j; applyInvitationMetrics(); $("loginView").hidden=true; $("dashboardView").hidden=false;
     $("lastUpdatedText").textContent=new Date().toLocaleTimeString([],{hour:"2-digit",minute:"2-digit"});
     renderAll(); dashboardLoaded=true; toast(first?"Dashboard ready.":"Dashboard synced.");
-  }catch(e){$("loginError").textContent=e.message;$("loginView").hidden=false;$("dashboardView").hidden=true}
+  }catch(e){$("loginError").textContent=e.dashboardService?"Dashboard service could not be reached. Please refresh and try again.":e.message;$("loginView").hidden=false;$("dashboardView").hidden=true}
 }
 function renderAll(){eventStatus();summary();drawCharts();recent();filterGuests();venueForm();messages()}
 function tab(name){
@@ -237,7 +237,10 @@ function exportRows(){return[["Guest Name","Mobile","Attending","Adults","Childr
 function csv(){download("husain-rsvp.csv",exportRows().map(r=>r.map(v=>`"${String(v??"").replace(/"/g,'""')}"`).join(",")).join("\n"),"text/csv")}
 function excel(){download("husain-rsvp.xls",`<table>${exportRows().map(r=>`<tr>${r.map(c=>`<td>${esc(c)}</td>`).join("")}</tr>`).join("")}</table>`,"application/vnd.ms-excel")}
 function download(n,c,t){const b=new Blob([c],{type:t}),a=document.createElement("a");a.href=URL.createObjectURL(b);a.download=n;a.click()}
-async function post(d){return(await fetch(API_URL,{method:"POST",headers:{"Content-Type":"text/plain;charset=utf-8"},body:JSON.stringify(d)})).json()}
+function dashboardServiceError(message){const error=Error(message);error.dashboardService=true;return error}
+async function readJsonResponse(response){const contentType=response.headers?.get("content-type")||"",text=await response.text();if(!response.ok)throw dashboardServiceError(`Dashboard service returned HTTP ${response.status}`);if(!contentType.includes("application/json")&&!contentType.includes("text/plain")){console.error("Unexpected dashboard response",{status:response.status,contentType,preview:text.slice(0,200)});throw dashboardServiceError("Dashboard service returned an unexpected web page instead of data.")}try{return JSON.parse(text)}catch(error){console.error("Dashboard JSON parse failure",{status:response.status,contentType,preview:text.slice(0,200)});throw dashboardServiceError("Dashboard service returned data that could not be read.")}}
+async function dashboardFetch(url,options){try{return await fetch(url,options)}catch(error){console.error("Dashboard request failed",error);throw dashboardServiceError("Dashboard service could not be reached. Please refresh and try again.")}}
+async function post(d){const response=await dashboardFetch(API_URL,{method:"POST",headers:{"Content-Type":"text/plain;charset=utf-8"},body:JSON.stringify(d)});return readJsonResponse(response)}
 function toast(m,e=false){const x=$("toast");x.textContent=m;x.style.background=e?"#9E2230":"#0C2C55";x.classList.add("show");setTimeout(()=>x.classList.remove("show"),2300)}
 function esc(v){return String(v??"").replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]))}
 function shortTime(v){const d=new Date(v);return isNaN(d)?String(v).slice(-8):d.toLocaleTimeString([],{hour:"2-digit",minute:"2-digit"})}
