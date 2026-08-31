@@ -1,5 +1,27 @@
 # Production Release Changelog
 
+## Husain RSVP Invitation Artwork Update
+
+Modified files:
+
+- `husain-rsvp-background.jpeg`
+  - Replaced with the updated production RSVP homepage artwork.
+
+- `husain-invite.jpg`
+  - Replaced with the updated production personalized invitation share artwork.
+
+- `index.html`
+  - Updates the RSVP homepage artwork cache-busting query string.
+
+- `dashboard.js`
+  - Updates the native invitation share image fetch path cache-busting query string while preserving the shared file name.
+
+- `dashboard.html`
+  - Updates the dashboard script cache-busting query string so the new native-share image fetch path reaches production.
+
+- `CHANGELOG.md`
+  - Adds this production artwork update entry.
+
 ## Dashboard API Parsing and Cache Refresh
 
 Modified files:

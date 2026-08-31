@@ -2,7 +2,7 @@
 const API_URL="https://script.google.com/macros/s/AKfycbwo6kNofaeRAnITieVxDRccMurllRKSFmO-cElHxIYI3ytJJn3MfjKCOvtqdtva93_q/exec",KEY="212-34";
 let key="",data=null,filtered=[],filteredInvitations=[],editing=null,editingInvitation=null,deleting=null,charts={},dashboardLoaded=false;
 const $=id=>document.getElementById(id);
-const INVITATION_IMAGE_PATH="husain-invite.jpg";
+const INVITATION_IMAGE_PATH="husain-invite.jpg?v=20260831-1";
 
 document.addEventListener("DOMContentLoaded",()=>{
   bind(); $("adminKeyInput").value=KEY;
